@@ -1,358 +1,380 @@
-
+@model ERPNextNewApp.ViewModels.Employees.EmployeesListViewModel
+@using ERPNextNewApp.Models
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery _antiforgery
 @{
-    ViewData["Title"] = "Connexion - Module RH";
-    Layout = "_Layout";
+    ViewData["Title"] = "Liste des Employés";
+    var departments = ViewData["Departement"] as List<ERPNextNewApp.Models.Department>;
+    var genders = ViewData["Gender"] as List<ERPNextNewApp.Models.Gender>;
+    var token = _antiforgery.GetAndStoreTokens(Context).RequestToken;
 }
 
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Liste des Employés</h2>
-        <a href="#" class="btn btn-primary">
+        <a href="@Url.Action("Create", "Employees")" class="btn btn-primary">
             <i class="fas fa-plus me-2"></i>Ajouter Employé
         </a>
     </div>
 
-    <!-- Filtres de recherche -->
-    <div class="card mb-4">
-        <div class="card-header bg-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Filtres de recherche</h5>
-            <button class="btn btn-sm btn-link text-muted" id="toggleFilters">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-        </div>
-        <div class="card-body" id="filtersSection">
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="fas fa-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Rechercher par nom, prénom..." id="searchInput">
+    <!-- Formulaire de recherche -->
+    <form asp-controller="Employees" asp-action="Index" method="get" id="searchForm">
+        <div class="card mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Filtres de recherche</h5>
+                <button class="btn btn-sm btn-link text-muted" type="button" id="toggleFilters">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="card-body" id="filtersSection">
+                <div class="row g-3">
+                    <!-- Champ de recherche par nom -->
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                            <input type="text" class="form-control" name="nom" 
+                                   placeholder="Rechercher par nom..." 
+                                   value="@Model.Filters.Nom">
+                        </div>
+                    </div>
+                    
+                    <!-- Filtre par département -->
+                    <div class="col-md-3">
+                        <select class="form-select" name="departement">
+                            <option value="">Tous les départements</option>
+                            @if (departments != null)
+                            {
+                                foreach (var dept in departments)
+                                {
+                                    <option value="@dept.DepartmentName" 
+                                            selected="@(Model.Filters.Departement == dept.DepartmentName)">
+                                        @dept.DepartmentName
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    
+                    <!-- Filtre par statut -->
+                    <div class="col-md-3">
+                        <select class="form-select" name="status">
+                            <option value="">Tous les statuts</option>
+                            <option value="Active" selected="@(Model.Filters.Status == "Active")">Actif</option>
+                            <option value="Inactive" selected="@(Model.Filters.Status == "Inactive")">En congé</option>
+                            <option value="Suspended" selected="@(Model.Filters.Status == "Suspended")">En formation</option>
+                            <option value="Left" selected="@(Model.Filters.Status == "Left")">Démissionné</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Boutons d'action -->
+                    <div class="col-md-2 d-flex">
+                        <button type="submit" class="btn btn-primary w-100 me-2">
+                            <i class="fas fa-search me-2"></i>Rechercher
+                        </button>
+                        <a href="@Url.Action("Index")" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-sync"></i>
+                        </a>
                     </div>
                 </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="departmentFilter">
-                        <option value="">Tous les départements</option>
-                        <option>Ressources Humaines</option>
-                        <option>Informatique</option>
-                        <option>Marketing</option>
-                        <option>Comptabilité</option>
-                        <option>Production</option>
-                    </select>
-                </div>
-                <div class="col-md-3">
-                    <select class="form-select" id="statusFilter">
-                        <option value="">Tous les statuts</option>
-                        <option>Actif</option>
-                        <option>En congé</option>
-                        <option>En formation</option>
-                        <option>Démissionné</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-center">
-                    <button class="btn btn-outline-secondary w-100" id="resetFilters">
-                        <i class="fas fa-sync me-2"></i>Réinitialiser
-                    </button>
+                
+                <!-- Filtres avancés -->
+                <div class="row g-3 mt-3">
+                    <!-- Date d'embauche début -->
+                    <div class="col-md-3">
+                        <label class="form-label">Date d'embauche début</label>
+                        <input type="date" class="form-control" name="dateEmbaucheDebut" 
+                               value="@(Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    
+                    <!-- Date d'embauche fin -->
+                    <div class="col-md-3">
+                        <label class="form-label">Date d'embauche fin</label>
+                        <input type="date" class="form-control" name="dateEmbaucheFin" 
+                               value="@(Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd"))">
+                    </div>
+                    
+                    <!-- Filtre par genre -->
+                    <div class="col-md-3">
+                        <label class="form-label">Genre</label>
+                        <select class="form-select" name="genre">
+                            <option value="">Tous</option>
+                            @if (genders != null)
+                            {
+                                foreach (var gender in genders)
+                                {
+                                    <option value="@gender.Name" 
+                                            selected="@(Model.Filters.Genre == gender.Name)">
+                                        @gender.Name
+                                    </option>
+                                }
+                            }
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+        
+        <!-- Paramètres de pagination cachés -->
+        <input type="hidden" name="page" value="1" id="pageInput">
+        <input type="hidden" name="pageSize" value="@Model.PageSize">
+    </form>
 
-    <!-- Tableau des employés -->
-    <div class="card">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead>
-                        <tr>
-                            <th class="text-center">
-                                <input type="checkbox" id="selectAll">
-                            </th>
-                            <th>Nom & Prénom</th>
-                            <th>Poste</th>
-                            <th>Département</th>
-                            <th>Date d'embauche</th>
-                            <th>Statut</th>
-                            <th class="text-center">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Employé 1 -->
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="employee-check">
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=Martin+Dubois&background=6366f1&color=fff" 
-                                         class="rounded-circle me-3" width="40" height="40">
-                                    <div>
-                                        <div class="fw-bold">Martin Dubois</div>
-                                        <div class="text-muted small">martin.dubois@example.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Directeur RH</td>
-                            <td>Ressources Humaines</td>
-                            <td>15/06/2018</td>
-                            <td>
-                                <span class="badge bg-success">Actif</span>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" title="Voir">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <!-- Employé 2 -->
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="employee-check">
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=Sophie+Leroy&background=ec4899&color=fff" 
-                                         class="rounded-circle me-3" width="40" height="40">
-                                    <div>
-                                        <div class="fw-bold">Sophie Leroy</div>
-                                        <div class="text-muted small">sophie.leroy@example.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Développeuse Fullstack</td>
-                            <td>Informatique</td>
-                            <td>22/01/2020</td>
-                            <td>
-                                <span class="badge bg-success">Actif</span>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" title="Voir">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <!-- Employé 3 -->
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="employee-check">
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=Pierre+Moreau&background=8b5cf6&color=fff" 
-                                         class="rounded-circle me-3" width="40" height="40">
-                                    <div>
-                                        <div class="fw-bold">Pierre Moreau</div>
-                                        <div class="text-muted small">pierre.moreau@example.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Chef de projet</td>
-                            <td>Marketing</td>
-                            <td>03/09/2019</td>
-                            <td>
-                                <span class="badge bg-warning text-dark">En congé</span>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" title="Voir">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <!-- Employé 4 -->
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="employee-check">
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=Julie+Petit&background=10b981&color=fff" 
-                                         class="rounded-circle me-3" width="40" height="40">
-                                    <div>
-                                        <div class="fw-bold">Julie Petit</div>
-                                        <div class="text-muted small">julie.petit@example.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Comptable</td>
-                            <td>Comptabilité</td>
-                            <td>12/03/2021</td>
-                            <td>
-                                <span class="badge bg-success">Actif</span>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" title="Voir">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        
-                        <!-- Employé 5 -->
-                        <tr>
-                            <td class="text-center">
-                                <input type="checkbox" class="employee-check">
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <img src="https://ui-avatars.com/api/?name=Thomas+Martin&background=ef4444&color=fff" 
-                                         class="rounded-circle me-3" width="40" height="40">
-                                    <div>
-                                        <div class="fw-bold">Thomas Martin</div>
-                                        <div class="text-muted small">thomas.martin@example.com</div>
-                                    </div>
-                                </div>
-                            </td>
-                            <td>Responsable production</td>
-                            <td>Production</td>
-                            <td>05/11/2017</td>
-                            <td>
-                                <span class="badge bg-info">En formation</span>
-                            </td>
-                            <td class="text-center">
-                                <div class="btn-group">
-                                    <button class="btn btn-sm btn-outline-primary" title="Voir">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            
-            <!-- Pagination et actions groupées -->
-            <div class="d-flex justify-content-between align-items-center p-3 border-top">
-                <div>
-                    <button class="btn btn-outline-danger btn-sm" id="deleteSelected">
-                        <i class="fas fa-trash-alt me-1"></i> Supprimer sélection
-                    </button>
+    <!-- Affichage des résultats -->
+    @if (Model.Employees == null || !Model.Employees.Any())
+    {
+        <div class="alert alert-info">
+            Aucun employé trouvé avec les critères sélectionnés.
+        </div>
+    }
+    else
+    {
+        <!-- Tableau des employés -->
+        <div class="card">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th class="text-center">
+                                    <input type="checkbox" id="selectAll">
+                                </th>
+                                <th>Nom & Prénom</th>
+                                <th>Poste</th>
+                                <th>Département</th>
+                                <th>Date d'embauche</th>
+                                <th>Statut</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var employee in Model.Employees)
+                            {
+                                <tr data-employee-name="@employee.FullName">
+                                    <td class="text-center">
+                                        <input type="checkbox" class="employee-check">
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            @if (!string.IsNullOrEmpty(employee.PhotoUrl))
+                                            {
+                                                <img src="@employee.PhotoUrl" 
+                                                     class="rounded-circle me-3" width="40" height="40">
+                                            }
+                                            else
+                                            {
+                                                <div class="rounded-circle bg-secondary me-3" 
+                                                     style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+                                                    <i class="fas fa-user text-white"></i>
+                                                </div>
+                                            }
+                                            <div>
+                                                <div class="fw-bold">@employee.FullName</div>
+                                                <div class="text-muted small">@employee.Email</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>@employee.Position</td>
+                                    <td>@employee.Department</td>
+                                    <td>@employee.HiringDate?.ToString("dd/MM/yyyy")</td>
+                                    <td>
+                                        @{
+                                            var badgeClass = "bg-secondary";
+                                            if (employee.Status == "Actif") badgeClass = "bg-success";
+                                            else if (employee.Status == "En congé") badgeClass = "bg-warning text-dark";
+                                            else if (employee.Status == "Démissionné") badgeClass = "bg-danger";
+                                        }
+                                        <span class="badge @badgeClass">@employee.Status</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <button class="btn btn-sm btn-outline-primary" title="Voir">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" title="Modifier">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
                 
-                <nav>
-                    <ul class="pagination mb-0">
-                        <li class="page-item disabled">
-                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Précédent</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#">Suivant</a>
-                        </li>
-                    </ul>
-                </nav>
-                
-                <div class="text-muted small">
-                    Affichage de 1 à 5 sur 32 employés
+                <!-- Pagination -->
+                <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <div>
+                        <button class="btn btn-outline-danger btn-sm" id="deleteSelected">
+                            <i class="fas fa-trash-alt me-1"></i> Supprimer sélection
+                        </button>
+                    </div>
+                    
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <!-- Page précédente -->
+                            <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                                <a class="page-link" 
+                                   href="@Url.Action("Index", new {
+                                       page = Model.CurrentPage - 1,
+                                       pageSize = Model.PageSize,
+                                       nom = Model.Filters.Nom,
+                                       departement = Model.Filters.Departement,
+                                       status = Model.Filters.Status,
+                                       genre = Model.Filters.Genre,
+                                       dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                       dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                   })">
+                                    Précédent
+                                </a>
+                            </li>
+                            
+                            <!-- Pages numérotées -->
+                            @for (int i = 1; i <= Model.TotalPages; i++)
+                            {
+                                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                                    <a class="page-link" 
+                                       href="@Url.Action("Index", new {
+                                           page = i,
+                                           pageSize = Model.PageSize,
+                                           nom = Model.Filters.Nom,
+                                           departement = Model.Filters.Departement,
+                                           status = Model.Filters.Status,
+                                           genre = Model.Filters.Genre,
+                                           dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                           dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                       })">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+                            
+                            <!-- Page suivante -->
+                            <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                                <a class="page-link" 
+                                   href="@Url.Action("Index", new {
+                                       page = Model.CurrentPage + 1,
+                                       pageSize = Model.PageSize,
+                                       nom = Model.Filters.Nom,
+                                       departement = Model.Filters.Departement,
+                                       status = Model.Filters.Status,
+                                       genre = Model.Filters.Genre,
+                                       dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                       dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                   })">
+                                    Suivant
+                                </a>
+                            </li>
+                        </ul>
+                    </nav>
+                    
+                    <div class="text-muted small">
+                        Affichage de @((Model.CurrentPage - 1) * Model.PageSize + 1) 
+                        à @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalPages) 
+                        sur @Model.TotalPages employés
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 
-<script>
-    // Fonctionnalité de filtrage
-    document.addEventListener('DOMContentLoaded', function() {
-        // Toggle des filtres
-        const toggleFilters = document.getElementById('toggleFilters');
-        const filtersSection = document.getElementById('filtersSection');
-        
-        toggleFilters.addEventListener('click', function() {
-            filtersSection.classList.toggle('d-none');
-            const icon = this.querySelector('i');
-            if (filtersSection.classList.contains('d-none')) {
-                icon.classList.remove('fa-chevron-up');
-                icon.classList.add('fa-chevron-down');
-            } else {
-                icon.classList.remove('fa-chevron-down');
-                icon.classList.add('fa-chevron-up');
-            }
-        });
-        
-        // Réinitialisation des filtres
-        const resetFilters = document.getElementById('resetFilters');
-        resetFilters.addEventListener('click', function() {
-            document.getElementById('searchInput').value = '';
-            document.getElementById('departmentFilter').selectedIndex = 0;
-            document.getElementById('statusFilter').selectedIndex = 0;
-        });
-        
-        // Sélection/désélection de tous les employés
-        const selectAll = document.getElementById('selectAll');
-        selectAll.addEventListener('change', function() {
-            const checkboxes = document.querySelectorAll('.employee-check');
-            checkboxes.forEach(checkbox => {
-                checkbox.checked = selectAll.checked;
-            });
-        });
-        
-        // Suppression des employés sélectionnés
-        const deleteSelected = document.getElementById('deleteSelected');
-        deleteSelected.addEventListener('click', function() {
-            const selected = document.querySelectorAll('.employee-check:checked');
-            if (selected.length > 0) {
-                if (confirm(`Êtes-vous sûr de vouloir supprimer ${selected.length} employé(s) ?`)) {
-                    alert(`Suppression de ${selected.length} employé(s) effectuée !`);
-                }
-            } else {
-                alert('Veuillez sélectionner au moins un employé à supprimer.');
-            }
-        });
-        
-        // Recherche en temps réel
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', function() {
-            const searchTerm = this.value.toLowerCase();
-            const rows = document.querySelectorAll('tbody tr');
+@section Scripts {
+    <script>
+        function GetAntiXsrfRequestToken() {
+            return '@token';
+        }
+        // Fonctionnalité de filtrage
+        document.addEventListener('DOMContentLoaded', function() {
+            // Toggle des filtres
+            const toggleFilters = document.getElementById('toggleFilters');
+            const filtersSection = document.getElementById('filtersSection');
             
-            rows.forEach(row => {
-                const name = row.querySelector('td:nth-child(2) .fw-bold').textContent.toLowerCase();
-                const email = row.querySelector('td:nth-child(2) .text-muted').textContent.toLowerCase();
-                
-                if (name.includes(searchTerm) || email.includes(searchTerm)) {
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+            if (toggleFilters && filtersSection) {
+                toggleFilters.addEventListener('click', function() {
+                    filtersSection.classList.toggle('d-none');
+                    const icon = this.querySelector('i');
+                    if (filtersSection.classList.contains('d-none')) {
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    } else {
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    }
+                });
+            }
+            
+            // Sélection/désélection de tous les employés
+            const selectAll = document.getElementById('selectAll');
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    const checkboxes = document.querySelectorAll('.employee-check');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = selectAll.checked;
+                    });
+                });
+            }
+            
+            // Suppression des employés sélectionnés
+            const deleteSelected = document.getElementById('deleteSelected');
+            if (deleteSelected) {
+                deleteSelected.addEventListener('click', async function() {
+                    const selected = document.querySelectorAll('.employee-check:checked');
+                    if (selected.length > 0) {
+                        if (confirm(`Êtes-vous sûr de vouloir supprimer ${selected.length} employé(s) ?`)) {
+                            const employeeIds = []; // Utiliser des IDs au lieu des noms
+                            selected.forEach(checkbox => {
+                                const row = checkbox.closest('tr');
+                                employeeIds.push(row.getAttribute('data-employee-id'));
+                            });
+
+                            try {
+                                const response = await fetch('@Url.Action("Delete", "Employee")', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(employeeIds)
+                                });
+
+                                const text = await response.text(); // lire le body UNE seule fois
+
+                                let result = null;
+                                try {
+                                    result = JSON.parse(text);
+                                } catch (e) {
+                                    // Le JSON est invalide → probablement une erreur côté serveur
+                                    throw new Error(`Réponse non JSON : ${text}`);
+                                }
+
+                                if (response.ok && result?.success) {
+                                    alert(result.message);
+                                    location.reload();
+                                } else {
+                                    alert(result?.message || "Erreur lors de la suppression");
+                                }
+                            } catch (error) {
+                                console.error('Erreur:', error);
+                                alert(`Erreur technique: ${error.message}`);
+                            }
+
+                        }
+                    } else {
+                        alert('Veuillez sélectionner au moins un employé à supprimer.');
+                    }
+                });
+            }
+            // Changement de page dans la pagination
+            document.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const href = this.getAttribute('href');
+                    if (href) {
+                        document.getElementById('pageInput').value = 
+                            new URLSearchParams(href.split('?')[1]).get('page') || '1';
+                        document.getElementById('searchForm').submit();
+                    }
+                });
             });
         });
-    });
-</script>
+    </script>
+}

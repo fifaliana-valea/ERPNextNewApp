@@ -1,3 +1,6 @@
+using ERPNextNewApp.Services.Departement;
+using ERPNextNewApp.Services.Employees;
+using ERPNextNewApp.Services.Gender;
 using ERPNextNewApp.Services.Login;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -10,6 +13,9 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession();
 
 builder.Services.AddScoped<ILoginService, LoginService>();
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+builder.Services.AddScoped<IDepartementService, DepartementService>();
+builder.Services.AddScoped<IGenderService,GenderService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
