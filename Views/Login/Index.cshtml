@@ -1,0 +1,46 @@
+@model ERPNextNewApp.Models.Request.AuthRequest
+@{
+    ViewData["Title"] = "Connexion - Module RH";
+    Layout = "_LayoutAuth";
+}
+
+<div class="login-wrapper">
+    <div class="login-container">
+        <div class="login-header">
+            <div class="brand-name">RH </div>
+            <h3>Gestion des Ressources Humaines</h3>
+            <p>Accédez à votre tableau de bord professionnel</p>
+        </div>
+
+        <form asp-action="Login" method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            
+            @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+            {
+                <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+            }
+
+            <div class="form-group">
+                <label asp-for="Usr" class="form-label">Identifiant</label>
+                <div class="input-spacing"></div>
+                <input asp-for="Usr" class="form-control" placeholder="votre.identifiant" />
+                <span asp-validation-for="Usr" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <label asp-for="Pwd" class="form-label">Mot de passe</label>
+                <div class="input-spacing"></div>
+                <input asp-for="Pwd" type="password" class="form-control" placeholder="••••••••" />
+                <span asp-validation-for="Pwd" class="text-danger"></span>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-login btn-block">SE CONNECTER</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

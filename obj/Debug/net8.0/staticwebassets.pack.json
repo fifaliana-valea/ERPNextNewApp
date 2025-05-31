@@ -5,6 +5,14 @@
       "PackagePath": "staticwebassets/ERPNextNewApp.bundle.scp.css"
     },
     {
+      "Id": "/home/valea/Documents/Eval/ERPNextNewApp/wwwroot/css/auth/login.css",
+      "PackagePath": "staticwebassets/css/auth/login.css"
+    },
+    {
+      "Id": "/home/valea/Documents/Eval/ERPNextNewApp/wwwroot/css/layout.css",
+      "PackagePath": "staticwebassets/css/layout.css"
+    },
+    {
       "Id": "/home/valea/Documents/Eval/ERPNextNewApp/wwwroot/css/site.css",
       "PackagePath": "staticwebassets/css/site.css"
     },
