@@ -1,0 +1,46 @@
+@{
+    ViewData["Title"] = "Importation des données";
+    var errors = ViewBag.Errors as List<string>;
+    var success = ViewBag.Success as string;
+}
+
+<div class="container mt-5">
+    <div class="card shadow p-4">
+        <h2 class="mb-0">Importation des Données</h2>
+
+        <form method="post" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label class="form-label">Fichier Employés</label>
+                <input type="file" name="employeeFile" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Fichier Structures</label>
+                <input type="file" name="structureFile" class="form-control" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Fichier Bulletins</label>
+                <input type="file" name="salaryFile" class="form-control" />
+            </div>
+            <button type="submit" class="btn btn-primary">Importer</button>
+        </form>
+
+        @if (errors != null && errors.Any())
+        {
+            <div class="alert alert-danger mt-4">
+                <h5>Erreurs détectées :</h5>
+                <ul>
+                    @foreach (var error in errors)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+        else if (!string.IsNullOrEmpty(success))
+        {
+            <div class="alert alert-success mt-4">
+                @success
+            </div>
+        }
+    </div>
+</div>

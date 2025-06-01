@@ -1,6 +1,7 @@
 using ERPNextNewApp.Services.Departement;
 using ERPNextNewApp.Services.Employees;
 using ERPNextNewApp.Services.Gender;
+using ERPNextNewApp.Services.Import;
 using ERPNextNewApp.Services.Login;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -16,6 +17,7 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IEmployeeService, EmployeeService>();
 builder.Services.AddScoped<IDepartementService, DepartementService>();
 builder.Services.AddScoped<IGenderService,GenderService>();
+builder.Services.AddScoped<IImportService, ImportService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
