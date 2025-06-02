@@ -1,8 +1,10 @@
 using ERPNextNewApp.Services.Import;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ERPNextNewApp.Controllers.Import;
 
+[Authorize]
 public class ImportController : Controller
 {
 

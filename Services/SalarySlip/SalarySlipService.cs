@@ -26,22 +26,11 @@ public class SalarySlipService : ISalarySlipService
             filtersArray.Add(new[] { "employee", "=", employeeId });
         }
 
-        if (mois > 0)
-        {
-            filtersArray.Add(new[] { "month(start_date)", "=", mois.ToString() });
-        }
-
-        if (annee > 0)
-        {
-            filtersArray.Add(new[] { "year(start_date)", "=", annee.ToString() });
-        }
-
-        // Construction de l’URL avec ou sans filtres
         string baseUrl = "/api/resource/Salary Slip?";
         string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"company\",\"posting_date\",\"start_date\",\"end_date\",\"net_pay\",\"gross_pay\",\"currency\",\"status\"]";
 
         string filtersPart = filtersArray.Count > 0
-            ? $"&filters={JsonSerializer.Serialize(filtersArray)}"
+            ? "&filters=" + WebUtility.UrlEncode(JsonSerializer.Serialize(filtersArray))
             : "";
 
         string endpoint = baseUrl + fieldsPart + filtersPart;
@@ -66,10 +55,17 @@ public class SalarySlipService : ISalarySlipService
             var slip = JsonSerializer.Deserialize<Models.Salary.SalarySlip>(item.ToString());
             result.Add(slip);
         }
+        
+        return result.Where(slip => 
+        {
+            if (!DateTime.TryParse(slip.StartDate, out var startDate))
+                return false;
 
-        return result;
+            return (mois <= 0 || startDate.Month == mois) &&
+                   (annee <= 0 || startDate.Year == annee);
+        }).ToList();
     }
-    
+
     public async Task<Models.Salary.SalarySlip> GetSalarySlipDetailAsync(string slipId)
     {
         if (string.IsNullOrWhiteSpace(slipId))

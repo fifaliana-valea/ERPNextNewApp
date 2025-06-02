@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using ERPNextNewApp.Services.Employees;
 using ERPNextNewApp.ViewModels.SalarySlips;
+using Microsoft.AspNetCore.Authorization;
 
 namespace ERPNextNewApp.Controllers
 {
+    [Authorize]
     public class SalarySlipsController : Controller
     {
         private readonly ISalarySlipService _salarySlipService;
@@ -27,6 +29,8 @@ namespace ERPNextNewApp.Controllers
         {
             try
             {
+                _logger.LogInformation("Appel Index avec paramètres : employeeId = {EmployeeId}, mois = {Mois}, annee = {Annee}", employeeId, mois, annee);
+
                 // Récupérer les fiches de paie filtrées
                 var salarySlips = await _salarySlipService.GetSalarySlipsAsync(employeeId, mois, annee);
 
@@ -63,6 +67,7 @@ namespace ERPNextNewApp.Controllers
             }
         }
 
+        [HttpGet]
         public async Task<IActionResult> Details(string id)
         {
             try
