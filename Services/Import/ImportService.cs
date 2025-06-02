@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using ERPNextNewApp.Models.Dto;
 using ERPNextNewApp.Services.Login;
@@ -76,8 +77,8 @@ public class ImportService : IImportService
                     Name = line[1].Trim(),
                     Abbreviation = line[2].Trim(),
                     Type = line[3].Trim().ToLower(),
-                    Value = line[4].Trim(),
-                    Remark = line.Length > 5 ? line[5].Trim() : null
+                    Formula = line[4].Trim(),
+                    Company = line.Length > 5 ? line[5].Trim() : null
                 };
 
                 if (string.IsNullOrWhiteSpace(structure.StructureCode)) throw new Exception("Code vide");
@@ -129,95 +130,104 @@ public class ImportService : IImportService
         return (result, errors);
     }
 
-public async Task<List<string>> ImportAllAsync(
-    string employeeFile,
-    string structureFile,
-    string salaryFile)
-{
-    _logger.LogInformation("Début de l'importation des fichiers.");
-
-    var (employees, employeeErrors) = await LoadAndValidateEmployees(employeeFile);
-    var (structures, structureErrors) = await LoadAndValidateSalaryStructures(structureFile);
-    var (slips, slipErrors) = await LoadAndValidateSalarySlips(salaryFile);
-
-    var allErrors = employeeErrors.Concat(structureErrors).Concat(slipErrors).ToList();
-    if (allErrors.Any())
+     public async Task<List<string>> ImportAllAsync(
+        string employeeFile,
+        string structureFile,
+        string salaryFile)
     {
-        _logger.LogWarning("Erreurs de validation détectées : {Errors}", string.Join(" | ", allErrors));
-        return allErrors;
-    }
+        _logger.LogInformation("Début de l'importation des fichiers.");
 
-    var payload = new
-    {
-        employees,
-        salaryStructures = structures,
-        salarySlips = slips
-    };
+        // Chargement et validation des données CSV
+        var (employees, employeeErrors) = await LoadAndValidateEmployees(employeeFile);
+        var (structures, structureErrors) = await LoadAndValidateSalaryStructures(structureFile);
+        var (slips, slipErrors) = await LoadAndValidateSalarySlips(salaryFile);
 
-    try
-    {
-        var json = JsonSerializer.Serialize(payload);
-        _logger.LogInformation("Payload JSON généré : {Json}", json);
-
-        using var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-        _logger.LogInformation("Envoi de la requête POST vers l'API Frappe...");
-
-        var response = await _loginService.MakeAuthenticatedRequest(
-            HttpMethod.Post,
-            "api/method/custom_app.api.import_bulk_data.import_bulk_data",
-            content
-        );
-
-        var responseContent = await response.Content.ReadAsStringAsync();
-        _logger.LogInformation("Réponse reçue : {ResponseContent}", responseContent);
-
-        if (!response.IsSuccessStatusCode)
+        // Concaténation des erreurs
+        var allErrors = employeeErrors.Concat(structureErrors).Concat(slipErrors).ToList();
+        if (allErrors.Any())
         {
-            _logger.LogError("Erreur HTTP: {StatusCode} - {Reason}", (int)response.StatusCode, response.StatusCode);
-            return new List<string> {
-                $"Erreur serveur: {(int)response.StatusCode} - {response.StatusCode} - {responseContent}"
-            };
+            _logger.LogWarning("Erreurs de validation détectées : {Errors}", string.Join(" | ", allErrors));
+            return allErrors;
         }
 
-        var options = new JsonSerializerOptions
+        // Préparation du payload selon le format attendu par ERPNext
+        var payload = new
         {
-            PropertyNameCaseInsensitive = true
+            employees = employees,
+            salary_structures = structures,
+            salary_slips = slips
         };
 
-        ImportResponse result;
         try
         {
-            result = JsonSerializer.Deserialize<ImportResponse>(responseContent, options);
-        }
-        catch (JsonException jsonEx)
-        {
-            _logger.LogError(jsonEx, "Erreur lors du parsing JSON de la réponse.");
-            return new List<string> { $"Erreur parsing JSON : {jsonEx.Message}" };
-        }
+            var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                WriteIndented = false,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Désactive l'échappement des caractères
+            });
+            _logger.LogInformation("Payload JSON généré : {Json}", json);
 
-        if (result == null)
-        {
-            _logger.LogError("Résultat de désérialisation null.");
-            return new List<string> { "Réponse JSON invalide ou vide." };
-        }
+            using var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-        if (!result.Message.Success)
-        {
-            _logger.LogWarning("Import partiellement ou totalement échoué. Message : {Message}", result.Message);
-            return result.Message.Errors?.Any() == true
-                ? result.Message.Errors
-                : new List<string> { result.Message.Message };
-        }
+            _logger.LogInformation("Envoi de la requête POST vers ERPNext...");
 
-        _logger.LogInformation("Importation réussie sans erreur.");
-        return new List<string>();
+            var response = await _loginService.MakeAuthenticatedRequest(
+                HttpMethod.Post,
+                "api/method/custom_app.api.import_bulk_data.import_bulk_data",
+                content
+            );
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Réponse reçue : {ResponseContent}", responseContent);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Erreur HTTP: {StatusCode} - {Reason}", (int)response.StatusCode, response.StatusCode);
+                return new List<string> {
+                    $"Erreur serveur: {(int)response.StatusCode} - {response.StatusCode} - {responseContent}"
+                };
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
+
+            ImportResponse? result;
+            try
+            {
+                result = JsonSerializer.Deserialize<ImportResponse>(responseContent, options);
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "Erreur lors du parsing JSON de la réponse.");
+                return new List<string> { $"Erreur parsing JSON : {jsonEx.Message}" };
+            }
+
+            if (result == null)
+            {
+                _logger.LogError("Résultat de désérialisation null.");
+                return new List<string> { "Réponse JSON invalide ou vide." };
+            }
+
+            if (!result.Message.Success)
+            {
+                _logger.LogWarning("Import partiellement ou totalement échoué. Message : {Message}", result.Message);
+                return result.Message.Errors?.Any() == true
+                    ? result.Message.Errors
+                    : new List<string> { result.Message.Message };
+            }
+
+            _logger.LogInformation("Importation réussie sans erreur.");
+            return new List<string>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur lors de l'importation des données.");
+            return new List<string> { $"Erreur système: {ex.Message}" };
+        }
     }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Erreur lors de l'importation des données.");
-        return new List<string> { $"Erreur système: {ex.Message}" };
-    }
-}
+
 
 }
