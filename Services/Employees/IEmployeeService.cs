@@ -14,5 +14,6 @@ public interface IEmployeeService
         int page = 1,
         int pageSize = 10);
 
+    Task<Employee?> GetEmployeeByIdAsync(string employeeId);
     Task<bool> DeleteEmployeesAsync(List<string> employeeNames);
 }

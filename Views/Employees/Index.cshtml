@@ -186,9 +186,10 @@
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-primary" title="Voir">
+                                            <a class="btn btn-sm btn-outline-primary" title="Voir"
+                                               href="@Url.Action("Index", "SalarySlips", new { employeeId = employee.Id })">
                                                 <i class="fas fa-eye"></i>
-                                            </button>
+                                            </a>
                                             <button class="btn btn-sm btn-outline-secondary" title="Modifier">
                                                 <i class="fas fa-edit"></i>
                                             </button>
