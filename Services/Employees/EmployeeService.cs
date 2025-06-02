@@ -148,5 +148,40 @@ public class EmployeeService : IEmployeeService
             return false;
         }
     }
+    
+    public async Task<Employee?> GetEmployeeByIdAsync(string employeeId)
+    {
+        if (string.IsNullOrEmpty(employeeId))
+            return null;
+
+        try
+        {
+            var endpoint = $"/api/resource/Employee/{employeeId}";
+            var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Échec lors de la récupération de l'employé {EmployeeId} - Statut: {Status}", employeeId, response.StatusCode);
+                return null;
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+
+            using var doc = JsonDocument.Parse(json);
+            var employeeJson = doc.RootElement.GetProperty("data");
+
+            var employee = JsonSerializer.Deserialize<Employee>(employeeJson.ToString(), new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+
+            return employee;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur lors de l'appel à GetEmployeeByIdAsync pour {EmployeeId}", employeeId);
+            return null;
+        }
+    }
 
 }

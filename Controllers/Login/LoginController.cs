@@ -42,7 +42,7 @@ public class LoginController : Controller
             HttpContext.Session.SetString("FullName", authResponse.FullName);
             _logger.LogInformation("Utilisateur connecté 2: {FullName}", HttpContext.Session.GetString("FullName"));
                 
-            return LocalRedirect("/Home");
+            return RedirectToAction("Index","Employees");
         }
         catch (Exception ex)
         {

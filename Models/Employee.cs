@@ -28,6 +28,9 @@ public class Employee
 
         [JsonPropertyName("company_email")]
         public string Email { get; set; }
+        
+        [JsonPropertyName("company")]
+        public string Company { get; set; }
 
         [JsonPropertyName("image")]
         public string PhotoUrl { get; set; }
