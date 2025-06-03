@@ -1,0 +1,61 @@
+@{
+    ViewBag.Title = "Réinitialisation des données de paie";
+}
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2>@ViewBag.Title</h2>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Réinitialiser les données</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-danger">
+                <h5><i class="fas fa-exclamation-triangle"></i> Attention</h5>
+                <p>
+                    Cette action va supprimer définitivement toutes les données de paie :<br>
+                    - Bulletins de paie<br>
+                    - Assignations de structure<br>
+                    - Structures de salaire<br>
+                    - Composants de salaire<br>
+                    - Employés<br>
+                </p>
+                <p class="mb-0">
+                    <strong>Cette action est irréversible.</strong>
+                </p>
+            </div>
+
+            @if (TempData["ResetMessage"] != null)
+            {
+                <div class="alert alert-info mt-3">
+                    @Html.Raw(TempData["ResetMessage"])
+                </div>
+            }
+
+            <form method="post" asp-controller="Utile" asp-action="ResetData">
+                @Html.AntiForgeryToken()
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" required id="confirmationCheck">
+                    <label class="form-check-label" for="confirmationCheck">
+                        Je confirme vouloir supprimer toutes les données de paie
+                    </label>
+                </div>
+                <button type="submit" class="btn btn-danger" id="resetButton" disabled>
+                    <i class="fas fa-trash-alt"></i> Réinitialiser les données
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('confirmationCheck').addEventListener('change', function() {
+            document.getElementById('resetButton').disabled = !this.checked;
+        });
+    </script>
+}
