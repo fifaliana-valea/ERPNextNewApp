@@ -3,8 +3,10 @@ using ERPNextNewApp.Services.SalarySlip;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using ERPNextNewApp.Services.Employees;
+using ERPNextNewApp.Services.Utile;
 using ERPNextNewApp.ViewModels.SalarySlips;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ERPNextNewApp.Controllers
 {
@@ -13,15 +15,18 @@ namespace ERPNextNewApp.Controllers
     {
         private readonly ISalarySlipService _salarySlipService;
         private readonly IEmployeeService _employeeService;
+        private readonly IUtileService _utileService;
         private readonly ILogger<SalarySlipsController> _logger;
 
         public SalarySlipsController(
             ISalarySlipService salarySlipService,
             IEmployeeService employeeService,
+            IUtileService utileService,
             ILogger<SalarySlipsController> logger)
         {
             _salarySlipService = salarySlipService;
             _employeeService = employeeService;
+            _utileService = utileService;
             _logger = logger;
         }
 
@@ -110,6 +115,45 @@ namespace ERPNextNewApp.Controllers
                 return StatusCode(500, "Erreur lors de la génération du PDF");
             }
         }
+        
+        public async Task<IActionResult> ListeSalarySlips(int mois = 0, int annee = 0, string employeeId = null)
+        {
+            // Récupérer les données
+            var salaryData = await _utileService.GetSalaryDisplayAsync(mois, annee, employeeId);
+            var employees = await _employeeService.GetEmployeesAllAsync();
+
+            // Préparer les données pour la vue
+            var vm = new SalarySlipViewModel
+            {
+                SalaryRows = salaryData,
+                Employees = employees,
+                SelectedMonth = mois,
+                SelectedYear = annee,
+                SelectedEmployeeId = employeeId
+            };
+
+            // Liste des mois pour le dropdown
+            ViewBag.Months = Enumerable.Range(1, 12)
+                .Select(m => new SelectListItem
+                {
+                    Text = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m),
+                    Value = m.ToString()
+                })
+                .ToList();
+
+            // Liste des années pour le dropdown (5 dernières années)
+            ViewBag.Years = Enumerable.Range(DateTime.Now.Year - 4, 5)
+                .Select(y => new SelectListItem
+                {
+                    Text = y.ToString(),
+                    Value = y.ToString()
+                })
+                .OrderByDescending(y => y.Value)
+                .ToList();
+
+            return View(vm);
+        }
+    
     }
     
 }

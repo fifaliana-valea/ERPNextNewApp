@@ -4,6 +4,7 @@ using ERPNextNewApp.Services.Gender;
 using ERPNextNewApp.Services.Import;
 using ERPNextNewApp.Services.Login;
 using ERPNextNewApp.Services.SalarySlip;
+using ERPNextNewApp.Services.Utile;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.CookiePolicy;
 
@@ -20,6 +21,7 @@ builder.Services.AddScoped<IDepartementService, DepartementService>();
 builder.Services.AddScoped<IGenderService,GenderService>();
 builder.Services.AddScoped<IImportService, ImportService>();
 builder.Services.AddScoped<ISalarySlipService, SalarySlipService>();
+builder.Services.AddScoped<IUtileService, UtileService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
