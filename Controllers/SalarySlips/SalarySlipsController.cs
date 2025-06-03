@@ -94,7 +94,22 @@ namespace ERPNextNewApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
+        
+        public async Task<IActionResult> DownloadSalarySlip(string slipId)
+        {
+            try
+            {
+                var salarySlip = await _salarySlipService.GetSalarySlipDetailAsync(slipId);
+                var pdfBytes = await _salarySlipService.CreateProfessionalPdf(salarySlip);
+        
+                return File(pdfBytes, "application/pdf", $"FicheDePaie_{salarySlip.Name}.pdf");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la génération du PDF");
+                return StatusCode(500, "Erreur lors de la génération du PDF");
+            }
+        }
     }
-
-
+    
 }
