@@ -63,14 +63,22 @@ public class SalarySlipService : ISalarySlipService
             result.Add(slip);
         }
         
-        return result.Where(slip => 
-        {
-            if (!DateTime.TryParse(slip.StartDate, out var startDate))
-                return false;
+        return result
+            .Where(slip =>
+            {
+                if (!DateTime.TryParse(slip.StartDate, out var startDate))
+                    return false;
 
-            return (mois <= 0 || startDate.Month == mois) &&
-                   (annee <= 0 || startDate.Year == annee);
-        }).ToList();
+                return (mois <= 0 || startDate.Month == mois) &&
+                       (annee <= 0 || startDate.Year == annee);
+            })
+            .OrderBy(slip =>
+            {
+                DateTime.TryParse(slip.StartDate, out var startDate);
+                return startDate;
+            })
+            .ToList();
+
     }
 
     public async Task<Models.Salary.SalarySlip> GetSalarySlipDetailAsync(string slipId)
@@ -113,6 +121,18 @@ public class SalarySlipService : ISalarySlipService
 
         return salarySlip;
     }
+
+
+    public async Task<List<Models.Salary.SalarySlip>> GetSalarySlipsAllAsync(string employeeId = null,int mois = 0, int annee = 0) 
+    {
+        List<Models.Salary.SalarySlip> slips = new List<Models.Salary.SalarySlip>();
+        List<Models.Salary.SalarySlip> slipsAll = await GetSalarySlipsAsync(employeeId, mois, annee);
+        foreach (var slip in slipsAll)
+        {
+            slips.Add(await GetSalarySlipDetailAsync(slip.Name));
+        }
+        return slips;
+    } 
 
     
     public async Task<byte[]> CreateProfessionalPdf(Models.Salary.SalarySlip salarySlip)
