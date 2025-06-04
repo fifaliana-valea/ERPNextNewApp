@@ -8,7 +8,7 @@ public class SalaryDisplayRow
 
     public Dictionary<string, decimal> Earnings { get; set; } = new();
 
-    public decimal DeductionsTotal { get; set; }
+    public Dictionary<string, decimal> DeductionsTotal { get; set; } = new();
 
     public decimal Net { get; set; }
     

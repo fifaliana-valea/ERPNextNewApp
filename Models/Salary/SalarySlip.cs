@@ -9,6 +9,9 @@ public class SalarySlip
 
     [JsonPropertyName("employee")]
     public string Employee { get; set; }
+    
+    [JsonPropertyName("salary_structure")]
+    public string Structure_salary { get; set; }
 
     [JsonPropertyName("employee_name")]
     public string EmployeeName { get; set; }

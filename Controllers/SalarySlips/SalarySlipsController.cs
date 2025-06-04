@@ -6,7 +6,6 @@ using ERPNextNewApp.Services.Employees;
 using ERPNextNewApp.Services.Utile;
 using ERPNextNewApp.ViewModels.SalarySlips;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace ERPNextNewApp.Controllers
 {
@@ -30,15 +29,15 @@ namespace ERPNextNewApp.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index(string employeeId = null, int mois = 0, int annee = 0)
+        public async Task<IActionResult> Index(string employeeId = null, int mois = 0, int annee = 0, int page = 1, int pageSize = 5)
         {
             try
             {
                 _logger.LogInformation("Appel Index avec paramètres : employeeId = {EmployeeId}, mois = {Mois}, annee = {Annee}", employeeId, mois, annee);
 
                 // Récupérer les fiches de paie filtrées
-                var salarySlips = await _salarySlipService.GetSalarySlipsAsync(employeeId, mois, annee);
-
+                var salarySlips = await _salarySlipService.GetSalarySlipsAllAsync(page, pageSize, employeeId, mois, annee);
+        
                 // Récupérer les infos de l'employé si un ID est spécifié
                 Employee employee = null;
                 if (!string.IsNullOrEmpty(employeeId))
@@ -46,14 +45,17 @@ namespace ERPNextNewApp.Controllers
                     employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
                 }
 
-                // Préparer le ViewModel
                 var viewModel = new SalarySlipIndexViewModel
                 {
                     Employee = employee,
-                    SalarySlips = salarySlips,
+                    SalarySlips = salarySlips.Slips,
                     SelectedEmployeeId = employeeId,
                     SelectedMonth = mois,
                     SelectedYear = annee,
+                    Page = page,  // Utiliser le paramètre de la requête
+                    PageSize = pageSize,  // Utiliser le paramètre de la requête
+                    TotalItems = salarySlips.TotalItems,
+                    TotalPage = salarySlips.TotalPages,
                     Months = Enumerable.Range(1, 12)
                         .Select(m => new { Id = m, Name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m) })
                         .ToDictionary(m => m.Id, m => m.Name),
@@ -100,6 +102,25 @@ namespace ERPNextNewApp.Controllers
             }
         }
         
+        [HttpGet]
+        public async Task<IActionResult> ListeSalarySlips(
+            string employeeId = null, int mois = 0, int annee = 0, int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                // Récupérer les fiches de paie avec les détails pour affichage
+                var salarySlipsData = await _salarySlipService.GetSalaryDisplayAsync(page, pageSize, mois, annee, employeeId);
+                ViewData["employees"] = await _employeeService.GetEmployeesAllAsync();
+                return View(salarySlipsData);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la récupération des fiches de paie.");
+                TempData["ErrorMessage"] = "Une erreur est survenue lors de la récupération des fiches de paie.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+        
         public async Task<IActionResult> DownloadSalarySlip(string slipId)
         {
             try
@@ -115,45 +136,6 @@ namespace ERPNextNewApp.Controllers
                 return StatusCode(500, "Erreur lors de la génération du PDF");
             }
         }
-        
-        public async Task<IActionResult> ListeSalarySlips(int mois = 0, int annee = 0, string employeeId = null)
-        {
-            // Récupérer les données
-            var salaryData = await _utileService.GetSalaryDisplayAsync(mois, annee, employeeId);
-            var employees = await _employeeService.GetEmployeesAllAsync();
-
-            // Préparer les données pour la vue
-            var vm = new SalarySlipViewModel
-            {
-                SalaryRows = salaryData,
-                Employees = employees,
-                SelectedMonth = mois,
-                SelectedYear = annee,
-                SelectedEmployeeId = employeeId
-            };
-
-            // Liste des mois pour le dropdown
-            ViewBag.Months = Enumerable.Range(1, 12)
-                .Select(m => new SelectListItem
-                {
-                    Text = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m),
-                    Value = m.ToString()
-                })
-                .ToList();
-
-            // Liste des années pour le dropdown (5 dernières années)
-            ViewBag.Years = Enumerable.Range(DateTime.Now.Year - 4, 5)
-                .Select(y => new SelectListItem
-                {
-                    Text = y.ToString(),
-                    Value = y.ToString()
-                })
-                .OrderByDescending(y => y.Value)
-                .ToList();
-
-            return View(vm);
-        }
-    
     }
     
 }

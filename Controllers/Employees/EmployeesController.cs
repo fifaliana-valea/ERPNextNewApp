@@ -29,10 +29,10 @@ public class EmployeesController : Controller
     }
 
     public async Task<IActionResult> Index(
-        string nom,
-        string departement,
-        string status,
-        string genre,
+        string? nom,
+        string? departement,
+        string? status,
+        string? genre,
         DateTime? dateEmbaucheDebut,
         DateTime? dateEmbaucheFin,
         int page = 1,
@@ -40,6 +40,7 @@ public class EmployeesController : Controller
     {
         try
         {
+            // Appel du service pour récupérer les employés filtrés
             var result = await _employeeService.GetEmployeesAsync(
                 nom,
                 departement,
@@ -50,10 +51,8 @@ public class EmployeesController : Controller
                 page,
                 pageSize);
 
-            // Gestion des erreurs de récupération des listes
+            // Récupération sécurisée des départements
             List<Department> departments = new();
-            List<Gender> genders = new();
-            
             try
             {
                 departments = await _departementService.GetAllDepartmentsAsync();
@@ -62,7 +61,9 @@ public class EmployeesController : Controller
             {
                 _logger.LogError(ex, "Erreur lors de la récupération des départements");
             }
-            
+
+            // Récupération sécurisée des genres
+            List<Gender> genders = new();
             try
             {
                 genders = await _genderService.GetAllGendersAsync();
@@ -72,17 +73,18 @@ public class EmployeesController : Controller
                 _logger.LogError(ex, "Erreur lors de la récupération des genres");
             }
 
+            // Transmission des listes à la vue via ViewData
             ViewData["Departement"] = departments;
             ViewData["Gender"] = genders;
 
-            int totalPages = (int)Math.Ceiling(result.TotalCount / (double)pageSize);
-
+            // Construction du ViewModel pour la vue
             var viewModel = new EmployeesListViewModel
             {
                 Employees = result.Employees,
                 CurrentPage = page,
                 PageSize = pageSize,
-                TotalPages = totalPages,
+                TotalCount = result.TotalCount,
+                TotalPages = (int)Math.Ceiling((double)result.TotalCount / pageSize),
                 Filters = new EmployeeFilters
                 {
                     Nom = nom,
@@ -103,6 +105,7 @@ public class EmployeesController : Controller
             return View(new EmployeesListViewModel());
         }
     }
+
     
     [HttpPost]
     public async Task<IActionResult> Delete([FromBody] List<string> employeeNames)

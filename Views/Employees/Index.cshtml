@@ -206,76 +206,77 @@
                 
                 <!-- Pagination -->
                 <div class="d-flex justify-content-between align-items-center p-3 border-top">
+                    <!-- Bouton de suppression -->
                     <div>
                         <button class="btn btn-outline-danger btn-sm" id="deleteSelected">
                             <i class="fas fa-trash-alt me-1"></i> Supprimer sélection
                         </button>
                     </div>
-                    
+
+                    <!-- Pagination -->
                     <nav>
                         <ul class="pagination mb-0">
                             <!-- Page précédente -->
                             <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                                <a class="page-link" 
-                                   href="@Url.Action("Index", new {
-                                       page = Model.CurrentPage - 1,
-                                       pageSize = Model.PageSize,
-                                       nom = Model.Filters.Nom,
-                                       departement = Model.Filters.Departement,
-                                       status = Model.Filters.Status,
-                                       genre = Model.Filters.Genre,
-                                       dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
-                                       dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
-                                   })">
+                                <a class="page-link" href="@Url.Action("Index", new {
+                                    page = Model.CurrentPage - 1,
+                                    pageSize = Model.PageSize,
+                                    nom = Model.Filters.Nom,
+                                    departement = Model.Filters.Departement,
+                                    status = Model.Filters.Status,
+                                    genre = Model.Filters.Genre,
+                                    dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                    dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                })">
                                     Précédent
                                 </a>
                             </li>
-                            
+
                             <!-- Pages numérotées -->
                             @for (int i = 1; i <= Model.TotalPages; i++)
                             {
                                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link" 
-                                       href="@Url.Action("Index", new {
-                                           page = i,
-                                           pageSize = Model.PageSize,
-                                           nom = Model.Filters.Nom,
-                                           departement = Model.Filters.Departement,
-                                           status = Model.Filters.Status,
-                                           genre = Model.Filters.Genre,
-                                           dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
-                                           dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
-                                       })">
+                                    <a class="page-link" href="@Url.Action("Index", new {
+                                        page = i,
+                                        pageSize = Model.PageSize,
+                                        nom = Model.Filters.Nom,
+                                        departement = Model.Filters.Departement,
+                                        status = Model.Filters.Status,
+                                        genre = Model.Filters.Genre,
+                                        dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                        dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                    })">
                                         @i
                                     </a>
                                 </li>
                             }
-                            
+
                             <!-- Page suivante -->
                             <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-                                <a class="page-link" 
-                                   href="@Url.Action("Index", new {
-                                       page = Model.CurrentPage + 1,
-                                       pageSize = Model.PageSize,
-                                       nom = Model.Filters.Nom,
-                                       departement = Model.Filters.Departement,
-                                       status = Model.Filters.Status,
-                                       genre = Model.Filters.Genre,
-                                       dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
-                                       dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
-                                   })">
+                                <a class="page-link" href="@Url.Action("Index", new {
+                                    page = Model.CurrentPage + 1,
+                                    pageSize = Model.PageSize,
+                                    nom = Model.Filters.Nom,
+                                    departement = Model.Filters.Departement,
+                                    status = Model.Filters.Status,
+                                    genre = Model.Filters.Genre,
+                                    dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                    dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                })">
                                     Suivant
                                 </a>
                             </li>
                         </ul>
                     </nav>
-                    
+
+                    <!-- Informations affichage -->
                     <div class="text-muted small">
-                        Affichage de @((Model.CurrentPage - 1) * Model.PageSize + 1) 
-                        à @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalPages) 
-                        sur @Model.TotalPages employés
+                        Affichage de @((Model.Employees.Count == 0 ? 0 : (Model.CurrentPage - 1) * Model.PageSize + 1))
+                        à @Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalCount)
+                        sur @Model.TotalCount employés
                     </div>
                 </div>
+
             </div>
         </div>
     }
