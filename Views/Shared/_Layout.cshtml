@@ -1,49 +1,176 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - ERPNextNewApp</title>
+    <title>@ViewData["Title"] - RH </title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/ERPNextNewApp.styles.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">ERPNextNewApp</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
+    <!-- Sidebar -->
+    <div class="sidebar">
+    <div class="sidebar-brand">
+        <div class="brand-container">
+            <button class="sidebar-toggle-lg" id="sidebarToggleLg">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h3><i class="fas fa-user-tie"></i> <span>RH</span></h3>
+        </div>
+    </div>
+    
+    <div class="sidebar-content">
+        <!-- Section Administration -->
+        <div class="sidebar-section">
+            <h5 class="sidebar-title">ADMINISTRATION</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                        <i class="fas fa-tachometer-alt"></i> <span>Tableau de bord</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Employees" asp-action="Index">
+                        <i class="fas fa-users-cog"></i> <span>Employés</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Reports" asp-action="Index">
+                        <i class="fas fa-chart-pie"></i> <span>Rapports</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Section Gestion de Paie -->
+        <div class="sidebar-section">
+            <h5 class="sidebar-title">GESTION DE PAIE</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="SalarySlips" asp-action="ListeSalarySlips">
+                        <i class="fas fa-file-invoice-dollar"></i> <span>Fiches de paie</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Payroll" asp-action="Index">
+                        <i class="fas fa-calculator"></i> <span>Paie</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Section Outils -->
+        <div class="sidebar-section">
+            <h5 class="sidebar-title">OUTILS</h5>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Import" asp-action="Index">
+                        <i class="fas fa-file-import"></i> <span>Import</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" asp-controller="Utile" asp-action="Index">
+                        <i class="fas fa-database"></i> <span>Init Données</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <button class="sidebar-toggle d-lg-none" id="sidebarToggle">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="topbar-right">
+                <div class="user-profile" id="userProfile">
+                    <div>
+                        <i class="fas fa-user-circle"></i>
+                        <span>@User.Identity?.Name</span>
+                    </div>
+                    <div class="user-menu" id="userMenu">
+                        <a href="#">
+                            <i class="fas fa-user-cog"></i> Mon profil
+                        </a>
+                        <a asp-controller="Import" asp-action="Index">
+                            <i class="fas fa-file-import"></i> Importer données
+                        </a>
+                        <div class="divider"></div>
+                        <a class="text-danger" asp-controller="Login" asp-action="Logout">
+                            <i class="fas fa-sign-out-alt"></i> Déconnexion
+                        </a>
+                    </div>
                 </div>
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+        </div>
+
+        <!-- Page Content -->
+        <main class="page-content">
             @RenderBody()
         </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="container-fluid">
+                &copy; @DateTime.Now.Year - RH  - <a asp-controller="Home" asp-action="Privacy">Confidentialité</a>
+            </div>
+        </footer>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2025 - ERPNextNewApp - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
+
+    <script>
+        // Toggle sidebar on mobile
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('active');
+        });
+
+        // Toggle sidebar on desktop
+        document.getElementById('sidebarToggleLg').addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('collapsed');
+            document.querySelector('.main-content').classList.toggle('sidebar-collapsed');
+        });
+
+        // Toggle user menu
+        document.getElementById('userProfile').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('userMenu').classList.toggle('active');
+        });
+
+        // Close user menu when clicking outside
+        document.addEventListener('click', function() {
+            const userMenu = document.getElementById('userMenu');
+            if (userMenu.classList.contains('active')) {
+                userMenu.classList.remove('active');
+            }
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarToggleLg = document.getElementById('sidebarToggleLg');
+            
+            if (window.innerWidth < 992 && 
+                !sidebar.contains(event.target) && 
+                !sidebarToggle.contains(event.target) &&
+                !sidebarToggleLg.contains(event.target)) {
+                sidebar.classList.remove('active');
+            }
+        });
+    </script>
 </body>
 </html>
