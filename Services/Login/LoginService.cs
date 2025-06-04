@@ -118,20 +118,18 @@ public class LoginService: ILoginService
         try
         {
             var sidCookie = _httpContextAccessor.HttpContext?.Request.Cookies["erpnext_sid"];
-                
-            if (string.IsNullOrEmpty(sidCookie))
+
+            if (string.IsNullOrWhiteSpace(sidCookie))
             {
-                _logger.LogWarning("Tentative de requête authentifiée sans session valide");
-                throw new UnauthorizedAccessException("Session invalide - Veuillez vous reconnecter");
+                _logger.LogWarning("Aucune session valide trouvée pour accéder à {Endpoint}", endpoint);
+                throw new UnauthorizedAccessException("Session invalide - veuillez vous reconnecter.");
             }
 
             using var request = new HttpRequestMessage(method, endpoint);
-                
-            request.Headers.Clear();
             request.Headers.Add("Accept", "application/json");
             request.Headers.Add("Cookie", $"sid={sidCookie}");
             request.Headers.Add("X-Requested-With", "XMLHttpRequest");
-                
+
             if (content != null)
             {
                 request.Content = content;
@@ -139,22 +137,21 @@ public class LoginService: ILoginService
             }
 
             var response = await _httpClient.SendAsync(request);
-                
+
             if (response.StatusCode == HttpStatusCode.Unauthorized)
             {
-                _logger.LogWarning("Session expirée lors de l'accès à {Endpoint}", endpoint);
-                throw new UnauthorizedAccessException("Session expirée");
+                _logger.LogWarning("Session expirée ou non autorisée pour {Endpoint}", endpoint);
+                throw new UnauthorizedAccessException("Session expirée - veuillez vous reconnecter.");
             }
 
-            _logger.LogDebug("Requête vers {Endpoint} - Statut: {StatusCode}", 
-                endpoint, response.StatusCode);
-                
+            _logger.LogInformation("Requête réussie vers {Endpoint} - Statut: {StatusCode}", endpoint, response.StatusCode);
             return response;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erreur dans MakeAuthenticatedRequest vers {Endpoint}", endpoint);
+            _logger.LogError(ex, "Erreur lors de l'exécution de MakeAuthenticatedRequest vers {Endpoint}", endpoint);
             throw;
         }
     }
+
 }

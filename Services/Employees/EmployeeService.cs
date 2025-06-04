@@ -48,33 +48,37 @@ public class EmployeeService : IEmployeeService
 
             if (dateEnd.HasValue)
                 filters.Add(new object[] { "date_of_joining", "<=", dateEnd.Value.ToString("yyyy-MM-dd") });
-
-            string filtersJson = JsonSerializer.Serialize(filters);
+            
+            var filtersJson = JsonSerializer.Serialize(filters);
 
             var query = HttpUtility.ParseQueryString(string.Empty);
-            query["fields"] = "[\"name\",\"employee_name\",\"designation\",\"department\",\"date_of_joining\",\"status\",\"gender\",\"company_email\",\"image\"]";
+            query["fields"] = JsonSerializer.Serialize(new[]
+            {
+                "name", "employee_name", "designation", "department", "date_of_joining",
+                "status", "gender", "company_email", "image"
+            });
             query["limit_start"] = ((page - 1) * pageSize).ToString();
             query["limit_page_length"] = pageSize.ToString();
             query["filters"] = filtersJson;
 
             var endpoint = $"/api/resource/Employee?{query}";
-
             var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
             response.EnsureSuccessStatusCode();
 
-            var json = await response.Content.ReadAsStringAsync();
-            var doc = JsonDocument.Parse(json);
-            var data = doc.RootElement.GetProperty("data");
+            using var jsonDoc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+            var employees = JsonSerializer.Deserialize<List<Employee>>(jsonDoc.RootElement.GetProperty("data")) ?? new();
 
-            var employees = JsonSerializer.Deserialize<List<Employee>>(data) ?? new();
-
-            // get total count separately
-            var countEndpoint = $"/api/resource/Employee?fields=[\"name\"]&filters={filtersJson}";
+            // Récupération du total avec les mêmes filtres
+            var countQuery = HttpUtility.ParseQueryString(string.Empty);
+            countQuery["filters"] = filtersJson;
+            countQuery["limit_page_length"] = "0"; // Important: désactive la limite
+            
+            var countEndpoint = $"/api/resource/Employee?{countQuery}";
             var countResponse = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, countEndpoint);
-            var countJson = await countResponse.Content.ReadAsStringAsync();
-            var countDoc = JsonDocument.Parse(countJson);
-            var countData = countDoc.RootElement.GetProperty("data");
-            int totalCount = countData.GetArrayLength();
+            countResponse.EnsureSuccessStatusCode();
+
+            using var countDoc = JsonDocument.Parse(await countResponse.Content.ReadAsStringAsync());
+            var totalCount = countDoc.RootElement.GetProperty("data").GetArrayLength();
 
             return (employees, totalCount);
         }
@@ -84,6 +88,7 @@ public class EmployeeService : IEmployeeService
             throw;
         }
     }
+
 
     public async Task<List<Employee>> GetEmployeesAllAsync()
     {

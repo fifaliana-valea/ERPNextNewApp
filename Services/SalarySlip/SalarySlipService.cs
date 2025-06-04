@@ -2,6 +2,7 @@ using System.Text.Json;
 using ERPNextNewApp.Services.Login;
 using System.Net;
 using ERPNextNewApp.Models.Salary;
+using ERPNextNewApp.ViewModels.SalarySlips;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
@@ -24,33 +25,34 @@ public class SalarySlipService : ISalarySlipService
         _logger = logger;
     }
 
-    public async Task<List<Models.Salary.SalarySlip>> GetSalarySlipsAsync(string employeeId = null, int mois = 0, int annee = 0)
+    public async Task<PaginatedSalarySlips> GetSalarySlipsAllAsync(
+        int page, 
+        int pageSize,
+        string employeeId = null,
+        int mois = 0, 
+        int annee = 0)
     {
-        var filtersArray = new List<string[]>();
+        // Champs de base sans earnings et deductions
+        string baseUrl = "/api/resource/Salary Slip?";
+        string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"salary_structure\",\"company\",\"posting_date\",\"start_date\",\"end_date\",\"net_pay\",\"gross_pay\",\"currency\",\"status\"]";
 
+        var filtersArray = new List<string[]>();
         if (!string.IsNullOrEmpty(employeeId))
         {
             filtersArray.Add(new[] { "employee", "=", employeeId });
         }
 
-        string baseUrl = "/api/resource/Salary Slip?";
-        string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"company\",\"posting_date\",\"start_date\",\"end_date\",\"net_pay\",\"gross_pay\",\"currency\",\"status\"]";
-
         string filtersPart = filtersArray.Count > 0
             ? "&filters=" + WebUtility.UrlEncode(JsonSerializer.Serialize(filtersArray))
             : "";
 
-        string endpoint = baseUrl + fieldsPart + filtersPart;
+        int offset = (page - 1) * pageSize;
+        string paginationPart = $"&limit={pageSize}&offset={offset}";
 
-        Console.WriteLine("Endpoint appelé : " + endpoint);
+        string endpoint = baseUrl + fieldsPart + filtersPart + paginationPart;
 
         var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
-
-        if (!response.IsSuccessStatusCode)
-        {
-            _logger.LogError("Erreur lors de la récupération des fiches de paie: {StatusCode}", response.StatusCode);
-            throw new Exception("Erreur API: " + response.ReasonPhrase);
-        }
+        response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
         var doc = JsonDocument.Parse(json);
@@ -60,25 +62,38 @@ public class SalarySlipService : ISalarySlipService
         foreach (var item in data.EnumerateArray())
         {
             var slip = JsonSerializer.Deserialize<Models.Salary.SalarySlip>(item.ToString());
-            result.Add(slip);
+            
+            // Récupérer les détails complets pour avoir earnings et deductions
+            var fullSlip = await GetSalarySlipDetailAsync(slip.Name);
+            
+            // Appliquer le filtre mois/année si nécessaire
+            if (DateTime.TryParse(fullSlip.StartDate, out var startDate))
+            {
+                if ((mois > 0 && startDate.Month != mois) || 
+                    (annee > 0 && startDate.Year != annee))
+                {
+                    continue;
+                }
+            }
+
+            result.Add(fullSlip);
         }
-        
-        return result
-            .Where(slip =>
-            {
-                if (!DateTime.TryParse(slip.StartDate, out var startDate))
-                    return false;
 
-                return (mois <= 0 || startDate.Month == mois) &&
-                       (annee <= 0 || startDate.Year == annee);
-            })
-            .OrderBy(slip =>
-            {
-                DateTime.TryParse(slip.StartDate, out var startDate);
-                return startDate;
-            })
-            .ToList();
+        // Requête pour le total (sans les détails)
+        string countEndpoint = baseUrl + fieldsPart + filtersPart + "&limit=0";
+        var countResponse = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, countEndpoint);
+        var countJson = await countResponse.Content.ReadAsStringAsync();
+        var countDoc = JsonDocument.Parse(countJson);
+        int totalItems = countDoc.RootElement.GetProperty("data").GetArrayLength();
 
+        return new PaginatedSalarySlips
+        {
+            Slips = result,
+            TotalItems = totalItems,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = (int)Math.Ceiling((double)totalItems / pageSize)
+        };
     }
 
     public async Task<Models.Salary.SalarySlip> GetSalarySlipDetailAsync(string slipId)
@@ -87,7 +102,7 @@ public class SalarySlipService : ISalarySlipService
             throw new ArgumentException("L'identifiant du Salary Slip est requis.");
 
         string endpoint = $"/api/resource/Salary Slip/{slipId}?" +
-                          "fields=[\"name\",\"employee\",\"employee_name\",\"company\",\"posting_date\",\"start_date\",\"end_date\"," +
+                          "fields=[\"name\",\"employee\",\"employee_name\",\"salary_structure\",\"company\",\"posting_date\",\"start_date\",\"end_date\"," +
                           "\"net_pay\",\"gross_pay\",\"currency\",\"status\",\"earnings\",\"deductions\"]";
 
         var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
@@ -106,6 +121,7 @@ public class SalarySlipService : ISalarySlipService
         {
             Name = data.GetProperty("name").GetString(),
             Employee = data.GetProperty("employee").GetString(),
+            Structure_salary = data.GetProperty("salary_structure").GetString(),
             EmployeeName = data.GetProperty("employee_name").GetString(),
             Company = data.GetProperty("company").GetString(),
             PostingDate = data.GetProperty("posting_date").GetString(),
@@ -123,18 +139,100 @@ public class SalarySlipService : ISalarySlipService
     }
 
 
-    public async Task<List<Models.Salary.SalarySlip>> GetSalarySlipsAllAsync(string employeeId = null,int mois = 0, int annee = 0) 
-    {
-        List<Models.Salary.SalarySlip> slips = new List<Models.Salary.SalarySlip>();
-        List<Models.Salary.SalarySlip> slipsAll = await GetSalarySlipsAsync(employeeId, mois, annee);
-        foreach (var slip in slipsAll)
-        {
-            slips.Add(await GetSalarySlipDetailAsync(slip.Name));
-        }
-        return slips;
-    } 
 
-    
+    public async Task<AllSalarySlips> GetSalaryDisplayAsync(int page, int pageSize, int mois = 0, int annee = 0, string employeeId = null)
+    {
+        var slips = await GetSalarySlipsAllAsync(page, pageSize, employeeId, mois, annee);
+        var result = new List<SalaryDisplayRow>();
+
+        var totalEarnings = new Dictionary<string, decimal>();
+        var totalDeductions = new Dictionary<string, decimal>();
+        decimal totalNet = 0;
+
+        // 👉 Étape 1 : collecter tous les types uniques d'earnings et deductions
+        var allEarningKeys = new HashSet<string>();
+        var allDeductionKeys = new HashSet<string>();
+
+        foreach (var slip in slips.Slips)
+        {
+            foreach (var earning in slip.Earnings)
+            {
+                allEarningKeys.Add(earning.SalaryComponentName);
+            }
+
+            foreach (var deduction in slip.Deductions)
+            {
+                allDeductionKeys.Add(deduction.SalaryComponentName);
+            }
+        }
+
+        // 👉 Étape 2 : traiter chaque slip avec initialisation à 0 pour les éléments manquants
+        foreach (var slip in slips.Slips)
+        {
+            var row = new SalaryDisplayRow
+            {
+                EmployeeName = slip.EmployeeName,
+                Net = slip.NetPay,
+                SlipId = slip.Name,
+                StartDate = slip.StartDate,
+                Earnings = new Dictionary<string, decimal>(),
+                DeductionsTotal = new Dictionary<string, decimal>()
+            };
+
+            totalNet += slip.NetPay;
+
+            // Initialiser tous les earnings à 0
+            foreach (var key in allEarningKeys)
+            {
+                row.Earnings[key] = 0;
+            }
+
+            // Remplir les earnings présents
+            foreach (var earning in slip.Earnings)
+            {
+                row.Earnings[earning.SalaryComponentName] += earning.Amount;
+
+                if (!totalEarnings.ContainsKey(earning.SalaryComponentName))
+                    totalEarnings[earning.SalaryComponentName] = 0;
+
+                totalEarnings[earning.SalaryComponentName] += earning.Amount;
+            }
+
+            // Initialiser tous les deductions à 0
+            foreach (var key in allDeductionKeys)
+            {
+                row.DeductionsTotal[key] = 0;
+            }
+
+            // Remplir les deductions présentes
+            foreach (var deduction in slip.Deductions)
+            {
+                row.DeductionsTotal[deduction.SalaryComponentName] += deduction.Amount;
+
+                if (!totalDeductions.ContainsKey(deduction.SalaryComponentName))
+                    totalDeductions[deduction.SalaryComponentName] = 0;
+
+                totalDeductions[deduction.SalaryComponentName] += deduction.Amount;
+            }
+
+            result.Add(row);
+        }
+
+        return new AllSalarySlips
+        {
+            Rows = result,
+            TotalItems = slips.TotalItems,
+            CurrentPage = slips.CurrentPage,
+            PageSize = slips.PageSize,
+            TotalPages = slips.TotalPages,
+            TotalEarnings = totalEarnings,
+            TotalDeductions = totalDeductions,
+            TotalNet = totalNet
+        };
+    }
+
+
+
     public async Task<byte[]> CreateProfessionalPdf(Models.Salary.SalarySlip salarySlip)
     {
         using (var memoryStream = new MemoryStream())
