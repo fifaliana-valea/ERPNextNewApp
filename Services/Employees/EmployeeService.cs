@@ -92,56 +92,32 @@ public class EmployeeService : IEmployeeService
 
     public async Task<List<Employee>> GetEmployeesAllAsync()
     {
-        const string endpoint = "/api/resource/Employee?fields=[\"name\",\"employee_name\",\"designation\",\"department\",\"date_of_joining\",\"status\",\"gender\",\"company_email\",\"image\"]";
+        const string endpoint = "/api/resource/Employee?fields=[\"name\",\"employee_name\",\"designation\",\"department\",\"date_of_joining\",\"status\",\"gender\",\"company_email\",\"image\"]&limit=0";
 
         try
         {
             using var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
-            
-            response.EnsureSuccessStatusCode(); // Lance une exception si le status code indique une erreur
+            response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            _logger.LogDebug("Réponse JSON reçue: {json}", json); // Log utile pour le débogage
+            _logger.LogDebug("Réponse JSON reçue: {json}", json);
 
             using var doc = JsonDocument.Parse(json);
             var employeeJson = doc.RootElement.GetProperty("data");
 
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase // Important pour la correspondance
-            };
+            var employees = JsonSerializer.Deserialize<List<Employee>>(
+                employeeJson.GetRawText(),
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
 
-            var employees = JsonSerializer.Deserialize<List<Employee>>(employeeJson.GetRawText(), options);
-
-            if (employees == null)
-            {
-                _logger.LogWarning("Aucun employé trouvé ou désérialisation a échoué");
-                return new List<Employee>();
-            }
-
-            // Vérification des données désérialisées
-            foreach (var employee in employees)
-            {
-                _logger.LogInformation("Employé récupéré - Nom: {FullName}, ID: {Name}, Société: {Company}", 
-                    employee.FullName, employee.Id, employee.Company);
-            }
-
-            return employees;
+            return employees ?? new List<Employee>();
         }
-        catch (HttpRequestException httpEx)
+        catch (Exception ex) when (ex is HttpRequestException or JsonException)
         {
-            _logger.LogError(httpEx, "Erreur HTTP lors de la récupération des employés");
-            return new List<Employee>();
-        }
-        catch (JsonException jsonEx)
-        {
-            _logger.LogError(jsonEx, "Erreur de désérialisation des données employés");
-            return new List<Employee>();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogCritical(ex, "Erreur inattendue dans GetEmployeesAllAsync");
+            _logger.LogError(ex, "Erreur lors de la récupération des employés");
             return new List<Employee>();
         }
     }
