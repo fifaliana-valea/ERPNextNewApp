@@ -125,8 +125,9 @@ namespace ERPNextNewApp.Controllers
         {
             try
             {
-                var statistique = await _salarySlipService.GetSalaryStatistiqueAsync(annee);
-                return View(statistique);
+                var model = await _salarySlipService.GetSalaryStatistiqueAsync(annee);
+                ViewBag.SelectedYear = annee; // Envoie l'année à la vue
+                return View(model);
             }
             catch (Exception e)
             {

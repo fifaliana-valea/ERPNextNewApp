@@ -21,7 +21,7 @@
                         <option value="0">Toutes années</option>
                         @for (int i = DateTime.Now.Year; i >= DateTime.Now.Year - 5; i--)
                         {
-                            <option value="@i">@i</option>
+                            <option value="@i" selected="@(i == ViewBag.SelectedYear)">@i</option>
                         }
                     </select>
                 </div>
@@ -173,16 +173,3 @@
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script>
-        // Pré-remplir les filtres avec les valeurs de l'URL
-        document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-
-            if (urlParams.has('annee')) {
-                document.getElementById('annee').value = urlParams.get('annee');
-            }
-        });
-    </script>
-}
