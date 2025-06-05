@@ -12,4 +12,7 @@ public class AllSalarySlips
     public Dictionary<string, decimal> TotalDeductions { get; set; } = new();
 
     public decimal TotalNet { get; set; } // 👉 somme des nets
+    public decimal TotalBrut { get; set; } // Total des salaires bruts
+    public decimal TotalDeduction { get; set; }
+    
 }

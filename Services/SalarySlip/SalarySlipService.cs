@@ -132,7 +132,6 @@ public class SalarySlipService : ISalarySlipService
         }
     }
     
-
     public async Task<Models.Salary.SalarySlip> GetSalarySlipDetailAsync(string slipId)
     {
         if (string.IsNullOrWhiteSpace(slipId))
@@ -174,9 +173,7 @@ public class SalarySlipService : ISalarySlipService
 
         return salarySlip;
     }
-
-
-
+    
     public async Task<AllSalarySlips> GetSalaryDisplayAsync(int page, int pageSize, int mois = 0, int annee = 0, string employeeId = null)
     {
         var slips = await GetSalarySlipsAllAsync(page, pageSize, employeeId, mois, annee);
@@ -185,6 +182,8 @@ public class SalarySlipService : ISalarySlipService
         var totalEarnings = new Dictionary<string, decimal>();
         var totalDeductions = new Dictionary<string, decimal>();
         decimal totalNet = 0;
+        decimal totalBrut = 0; // 👉 Nouveau: Total des gains bruts
+        decimal totalDeduction = 0;
 
         // 👉 Étape 1 : collecter tous les types uniques d'earnings et deductions
         var allEarningKeys = new HashSet<string>();
@@ -195,11 +194,13 @@ public class SalarySlipService : ISalarySlipService
             foreach (var earning in slip.Earnings)
             {
                 allEarningKeys.Add(earning.SalaryComponentName);
+                totalBrut += earning.Amount;
             }
 
             foreach (var deduction in slip.Deductions)
             {
                 allDeductionKeys.Add(deduction.SalaryComponentName);
+                totalDeduction += deduction.Amount;
             }
         }
 
@@ -264,7 +265,9 @@ public class SalarySlipService : ISalarySlipService
             TotalPages = slips.TotalPages,
             TotalEarnings = totalEarnings,
             TotalDeductions = totalDeductions,
-            TotalNet = totalNet
+            TotalNet = totalNet,
+            TotalBrut = totalBrut, 
+            TotalDeduction = totalDeduction
         };
     }
     
@@ -324,6 +327,9 @@ public class SalarySlipService : ISalarySlipService
         decimal totalDeductions = 0;
         decimal totalSalaryBut = 0;
 
+        var globalEarnings = new Dictionary<string, decimal>();
+        var globalDeductions = new Dictionary<string, decimal>();
+
         // Collecter tous les types d’éléments (Earnings / Deductions)
         foreach (var slip in salarySlips)
         {
@@ -351,7 +357,17 @@ public class SalarySlipService : ISalarySlipService
             });
         }
 
-        // Regrouper les salaires par mois (toutes années confondues)
+        // Initialiser les totaux globaux à zéro
+        foreach (var earningKey in allEarningKeys)
+        {
+            globalEarnings[earningKey] = 0;
+        }
+        foreach (var deductionKey in allDeductionKeys)
+        {
+            globalDeductions[deductionKey] = 0;
+        }
+
+        // Remplir les totaux mensuels et globaux
         foreach (var slip in salarySlips)
         {
             if (!DateTime.TryParse(slip.StartDate, out var date))
@@ -366,12 +382,14 @@ public class SalarySlipService : ISalarySlipService
             foreach (var earning in slip.Earnings)
             {
                 row.TotalEarnings[earning.SalaryComponentName] += earning.Amount;
+                globalEarnings[earning.SalaryComponentName] += earning.Amount;
                 totalSalaryBut += earning.Amount;
             }
 
             foreach (var deduction in slip.Deductions)
             {
                 row.TotalDeductions[deduction.SalaryComponentName] += deduction.Amount;
+                globalDeductions[deduction.SalaryComponentName] += deduction.Amount;
                 totalDeductions += deduction.Amount;
             }
         }
@@ -379,11 +397,14 @@ public class SalarySlipService : ISalarySlipService
         return new StatistiqueTotal
         {
             Salaries = result,
+            TotalGlobalEarnings = globalEarnings,
+            TotalGlobalDeductions = globalDeductions,
             TotalNet = totalSalaryNet,
             TotalBut = totalSalaryBut,
             TotalDeduction = totalDeductions
         };
     }
+
 
 
 
