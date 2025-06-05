@@ -120,6 +120,21 @@ namespace ERPNextNewApp.Controllers
                 return RedirectToAction(nameof(Index));
             }
         }
+
+        public async Task<IActionResult> Statistique(int annee = 0)
+        {
+            try
+            {
+                var statistique = await _salarySlipService.GetSalaryStatistiqueAsync(annee);
+                return View(statistique);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Erreur lors de la récupération  statistiques.");
+                TempData["ErrorMessage"] = "Une erreur est survenue lors de la récupération statistiques.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
         
         public async Task<IActionResult> DownloadSalarySlip(string slipId)
         {

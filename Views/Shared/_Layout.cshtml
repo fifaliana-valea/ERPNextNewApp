@@ -30,7 +30,7 @@
             <h5 class="sidebar-title">ADMINISTRATION</h5>
             <ul class="nav flex-column">
                 <li class="nav-item">
-                    <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
+                    <a class="nav-link" asp-controller="SalarySlips" asp-action="Statistique">
                         <i class="fas fa-tachometer-alt"></i> <span>Tableau de bord</span>
                     </a>
                 </li>
@@ -40,7 +40,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" asp-controller="Reports" asp-action="Index">
+                    <a class="nav-link" asp-controller="SalarySlips" asp-action="Rapports">
                         <i class="fas fa-chart-pie"></i> <span>Rapports</span>
                     </a>
                 </li>
@@ -100,9 +100,6 @@
                     <div class="user-menu" id="userMenu">
                         <a href="#">
                             <i class="fas fa-user-cog"></i> Mon profil
-                        </a>
-                        <a asp-controller="Import" asp-action="Index">
-                            <i class="fas fa-file-import"></i> Importer données
                         </a>
                         <div class="divider"></div>
                         <a class="text-danger" asp-controller="Login" asp-action="Logout">
