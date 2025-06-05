@@ -107,6 +107,7 @@
                             }
                             
                             <th class="text-end">Net</th>
+                            <th class="text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -134,6 +135,15 @@
                                     }
                                     
                                     <td class="text-end fw-bold">@salary.TotalNet.ToString("N2")</td>
+                                    <td>
+                                        <a class="btn btn-sm btn-outline-primary" title="Voir"
+                                           href="@Url.Action("DetailsSalaire", "SalarySlips", new { 
+                                                     annee = Context.Request.Query["annee"], 
+                                                     mois = salary.MonthLabel 
+                                                 })">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
                                 </tr>
                             }
                         }

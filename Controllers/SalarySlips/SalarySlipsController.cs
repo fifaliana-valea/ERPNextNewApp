@@ -137,6 +137,43 @@ namespace ERPNextNewApp.Controllers
             }
         }
         
+        public async Task<IActionResult> DetailsSalaire(string mois, int annee = 0, int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                // Conversion du nom du mois en numéro (1-12)
+                int month = DateTime.TryParseExact(mois, "MMMM", new CultureInfo("fr-FR"), DateTimeStyles.None, out var date)
+                    ? date.Month
+                    : 0;
+
+                if (month == 0)
+                {
+                    TempData["ErrorMessage"] = "Le mois fourni est invalide.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var salarySlips = await _salarySlipService.GetSalaryDisplayAsync(page, pageSize, month, annee, null);
+        
+                // Vérification des données reçues
+                if (salarySlips == null || salarySlips.Rows == null || !salarySlips.Rows.Any())
+                {
+                    TempData["WarningMessage"] = "Aucune donnée disponible pour les critères sélectionnés.";
+                }
+
+                ViewBag.Mois = mois;
+                ViewBag.Annee = annee;
+                ViewBag.PageSize = pageSize;
+
+                return View(salarySlips);
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Erreur lors de la récupération des détails de salaire.");
+                TempData["ErrorMessage"] = "Une erreur est survenue lors de la récupération des détails de salaire.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+        
         public async Task<IActionResult> DownloadSalarySlip(string slipId)
         {
             try
