@@ -510,3 +510,8 @@ footer.footer {
         display: flex;
     }
 }
+.chart-area {
+    position: relative;
+    height: 400px;
+    width: 100%;
+}
