@@ -18,4 +18,8 @@ public interface ISalarySlipService
         string employeeId = null);
 
     Task<byte[]> CreateProfessionalPdf(Models.Salary.SalarySlip salarySlip);
+
+    Task<List<Models.Salary.SalarySlip>> GetSalarySlipsStatistiqueAsync(int annee = 0);
+
+    Task<StatistiqueTotal> GetSalaryStatistiqueAsync(int annee = 0);
 }

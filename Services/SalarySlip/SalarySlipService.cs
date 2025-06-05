@@ -230,6 +230,124 @@ public class SalarySlipService : ISalarySlipService
             TotalNet = totalNet
         };
     }
+    
+    public async Task<List<Models.Salary.SalarySlip>> GetSalarySlipsStatistiqueAsync(int annee = 0)
+    {
+        // Champs de base sans earnings et deductions
+        string baseUrl = "/api/resource/Salary Slip?";
+        string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"salary_structure\",\"company\",\"posting_date\",\"start_date\",\"end_date\",\"net_pay\",\"gross_pay\",\"currency\",\"status\"]";
+
+        var filtersArray = new List<string[]>();
+
+
+        string filtersPart = filtersArray.Count > 0
+            ? "&filters=" + WebUtility.UrlEncode(JsonSerializer.Serialize(filtersArray))
+            : "";
+        
+
+        string endpoint = baseUrl + fieldsPart + filtersPart + "&limit=0";
+
+        var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
+        response.EnsureSuccessStatusCode();
+
+        var json = await response.Content.ReadAsStringAsync();
+        var doc = JsonDocument.Parse(json);
+        var data = doc.RootElement.GetProperty("data");
+
+        var result = new List<Models.Salary.SalarySlip>();
+        foreach (var item in data.EnumerateArray())
+        {
+            var slip = JsonSerializer.Deserialize<Models.Salary.SalarySlip>(item.ToString());
+            
+            // Récupérer les détails complets pour avoir earnings et deductions
+            var fullSlip = await GetSalarySlipDetailAsync(slip.Name);
+            
+            // Appliquer le filtre mois/année si nécessaire
+            if (DateTime.TryParse(fullSlip.StartDate, out var startDate))
+            {
+                if (annee > 0 && startDate.Year != annee)
+                {
+                    continue;
+                }
+            }
+            result.Add(fullSlip);
+        }
+        return result;
+    }
+    
+    public async Task<StatistiqueTotal> GetSalaryStatistiqueAsync(int annee = 0)
+    {
+        var salarySlips = await GetSalarySlipsStatistiqueAsync(annee);
+        var result = new List<StatistiqueSalary>();
+
+        var allEarningKeys = new HashSet<string>();
+        var allDeductionKeys = new HashSet<string>();
+
+        decimal totalSalaryNet = 0;
+        decimal totalDeductions = 0;
+        decimal totalSalaryBut = 0;
+
+        // Collecter tous les types d’éléments (Earnings / Deductions)
+        foreach (var slip in salarySlips)
+        {
+            foreach (var earning in slip.Earnings)
+                allEarningKeys.Add(earning.SalaryComponentName);
+            foreach (var deduction in slip.Deductions)
+                allDeductionKeys.Add(deduction.SalaryComponentName);
+        }
+
+        // Initialiser les 12 mois avec MonthLabel
+        var monthNames = new[]
+        {
+            "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+            "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+        };
+
+        for (int i = 0; i < 12; i++)
+        {
+            result.Add(new StatistiqueSalary
+            {
+                MonthLabel = monthNames[i],
+                TotalEarnings = allEarningKeys.ToDictionary(k => k, v => 0m),
+                TotalDeductions = allDeductionKeys.ToDictionary(k => k, v => 0m),
+                TotalNet = 0
+            });
+        }
+
+        // Regrouper les salaires par mois (toutes années confondues)
+        foreach (var slip in salarySlips)
+        {
+            if (!DateTime.TryParse(slip.StartDate, out var date))
+                continue;
+
+            int monthIndex = date.Month - 1;
+            var row = result[monthIndex];
+
+            row.TotalNet += slip.NetPay;
+            totalSalaryNet += slip.NetPay;
+
+            foreach (var earning in slip.Earnings)
+            {
+                row.TotalEarnings[earning.SalaryComponentName] += earning.Amount;
+                totalSalaryBut += earning.Amount;
+            }
+
+            foreach (var deduction in slip.Deductions)
+            {
+                row.TotalDeductions[deduction.SalaryComponentName] += deduction.Amount;
+                totalDeductions += deduction.Amount;
+            }
+        }
+
+        return new StatistiqueTotal
+        {
+            Salaries = result,
+            TotalNet = totalSalaryNet,
+            TotalBut = totalSalaryBut,
+            TotalDeduction = totalDeductions
+        };
+    }
+
 
 
 
