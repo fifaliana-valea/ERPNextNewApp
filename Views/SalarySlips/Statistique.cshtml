@@ -159,22 +159,22 @@
                         <tfoot class="fw-bold">
                             <tr>
                                 <td>Total</td>
-                                
+
                                 <!-- Totaux pour les gains -->
                                 @foreach (var earningType in allEarningTypes)
                                 {
-                                    var total = Model.Salaries.Sum(s => s.TotalEarnings.ContainsKey(earningType) ? s.TotalEarnings[earningType] : 0);
+                                    var total = Model.TotalGlobalEarnings.ContainsKey(earningType) ? Model.TotalGlobalEarnings[earningType] : 0;
                                     <td class="text-end">@total.ToString("N2")</td>
                                 }
-                                
+
                                 <!-- Totaux pour les déductions -->
                                 @foreach (var deductionType in allDeductionTypes)
                                 {
-                                    var total = Model.Salaries.Sum(s => s.TotalDeductions.ContainsKey(deductionType) ? s.TotalDeductions[deductionType] : 0);
+                                    var total = Model.TotalGlobalDeductions.ContainsKey(deductionType) ? Model.TotalGlobalDeductions[deductionType] : 0;
                                     <td class="text-end">@total.ToString("N2")</td>
                                 }
-                                
-                                <td class="text-end">@Model.Salaries.Sum(s => s.TotalNet).ToString("N2")</td>
+
+                                <td class="text-end">@Model.TotalNet.ToString("N2")</td>
                             </tr>
                         </tfoot>
                     }
