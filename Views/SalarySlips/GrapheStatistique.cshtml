@@ -1,0 +1,104 @@
+@model ERPNextNewApp.Models.Salary.StatistiqueTotal
+@{
+    ViewData["Title"] = "Graphique des Statistiques Salaires";
+
+    var labels = Model.Salaries.Select(s => s.MonthLabel).ToArray();
+    var dataNet = Model.Salaries.Select(s => s.TotalNet).ToArray();
+    var dataEarnings = Model.Salaries.Select(s => s.TotalEarnings.Values.Sum()).ToArray();
+    var dataDeductions = Model.Salaries.Select(s => s.TotalDeductions.Values.Sum()).ToArray();
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="text-center mb-4">Graphique des Statistiques Salaires</h2>
+
+    <!-- Formulaire de filtre -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" asp-action="GrapheStatistique" class="row g-3">
+                <div class="col-md-3">
+                    <label for="annee" class="form-label">Année</label>
+                    <select class="form-select" id="annee" name="annee">
+                        <option value="0">Toutes années</option>
+                        @for (int i = DateTime.Now.Year; i >= DateTime.Now.Year - 5; i--)
+                        {
+                            <option value="@i" selected="@(i == ViewBag.SelectedYear)">@i</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary me-2">Filtrer</button>
+                    <a href="@Url.Action("Statistique")" class="btn btn-secondary">Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Graphique encadré -->
+    <div class="card shadow">
+        <div class="card-body">
+            <canvas id="statistiqueChart" height="100"></canvas>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('statistiqueChart').getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: @Html.Raw(Json.Serialize(labels)),
+                datasets: [
+                    {
+                        label: 'Salaire Brut',
+                        data: @Html.Raw(Json.Serialize(dataEarnings)),
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderColor: 'rgba(40, 167, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Déductions',
+                        data: @Html.Raw(Json.Serialize(dataDeductions)),
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Salaire Net',
+                        data: @Html.Raw(Json.Serialize(dataNet)),
+                        backgroundColor: 'rgba(0, 123, 255, 0.7)',
+                        borderColor: 'rgba(0, 123, 255, 1)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Répartition mensuelle des salaires',
+                        font: {
+                            size: 18
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function (value) {
+                                return value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " Ar";
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+}

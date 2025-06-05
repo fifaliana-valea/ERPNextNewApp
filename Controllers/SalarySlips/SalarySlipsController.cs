@@ -137,6 +137,22 @@ namespace ERPNextNewApp.Controllers
             }
         }
         
+        public async Task<IActionResult> GrapheStatistique(int annee = 0)
+        {
+            try
+            {
+                var model = await _salarySlipService.GetSalaryStatistiqueAsync(annee);
+                ViewBag.SelectedYear = annee;
+                return View(model); // Assure-toi que `model` contient les valeurs mensuelles
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Erreur lors de la récupération Graphe statistiques.");
+                TempData["ErrorMessage"] = "Une erreur est survenue lors de la récupération Graphe statistiques.";
+                return RedirectToAction(nameof(Index));
+            }
+        }
+        
         public async Task<IActionResult> DetailsSalaire(string mois, int annee = 0, int page = 1, int pageSize = 10)
         {
             try
