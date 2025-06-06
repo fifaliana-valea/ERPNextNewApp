@@ -13,11 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ERPNextNewApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-<<<<<<< Updated upstream
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+463f3ebb4794beebb03db6d865b2c5c97b58878f")]
-=======
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+036e798f3e616efcbf1e59243603f70a95a4ce25")]
->>>>>>> Stashed changes
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+6a301015b8605ce1fbeb2a2be60fc13d3b5182e0")]
 [assembly: System.Reflection.AssemblyProductAttribute("ERPNextNewApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ERPNextNewApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
