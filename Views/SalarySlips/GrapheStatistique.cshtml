@@ -47,30 +47,36 @@
         const ctx = document.getElementById('statistiqueChart').getContext('2d');
 
         const chart = new Chart(ctx, {
-            type: 'bar',
+            type: 'line',
             data: {
                 labels: @Html.Raw(Json.Serialize(labels)),
                 datasets: [
                     {
                         label: 'Salaire Brut',
                         data: @Html.Raw(Json.Serialize(dataEarnings)),
-                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
                         borderColor: 'rgba(40, 167, 69, 1)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(40, 167, 69, 1)'
                     },
                     {
                         label: 'Déductions',
                         data: @Html.Raw(Json.Serialize(dataDeductions)),
-                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
                         borderColor: 'rgba(220, 53, 69, 1)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(220, 53, 69, 1)'
                     },
                     {
                         label: 'Salaire Net',
                         data: @Html.Raw(Json.Serialize(dataNet)),
-                        backgroundColor: 'rgba(0, 123, 255, 0.7)',
                         borderColor: 'rgba(0, 123, 255, 1)',
-                        borderWidth: 1
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.3,
+                        fill: true,
+                        pointBackgroundColor: 'rgba(0, 123, 255, 1)'
                     }
                 ]
             },
