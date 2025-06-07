@@ -19,7 +19,7 @@
                     <label for="annee" class="form-label">Année</label>
                     <select class="form-select" id="annee" name="annee">
                         <option value="0">Toutes années</option>
-                        @for (int i = DateTime.Now.Year; i >= DateTime.Now.Year - 5; i--)
+                        @for (int i = 2028; i >= 2028 - 5; i--)
                         {
                             <option value="@i" selected="@(i == ViewBag.SelectedYear)">@i</option>
                         }
