@@ -24,113 +24,6 @@ public class SalarySlipService : ISalarySlipService
         _loginService = loginService;
         _logger = logger;
     }
-
-    public async Task<PaginatedSalarySlips> GetSalarySlipsAllAsync(
-        int page,
-        int pageSize,
-        string employeeId = null,
-        int mois = 0,
-        int annee = 0)
-    {
-        // URL de base corrigée
-        string baseUrl = "/api/resource/Salary Slip?";
-
-        // Champs à récupérer
-        string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"start_date\"]";
-
-        // Construction des filtres
-        var filters = new List<object>();
-
-        if (!string.IsNullOrEmpty(employeeId))
-        {
-            filters.Add(new[] { "employee", "=", employeeId });
-        }
-
-        if (mois > 0 || annee > 0)
-        {
-            DateTime startDate, endDate;
-
-            if (mois > 0 && annee > 0)
-            {
-                startDate = new DateTime(annee, mois, 1);
-                endDate = startDate.AddMonths(1).AddDays(-1);
-            }
-            else if (annee > 0)
-            {
-                startDate = new DateTime(annee, 1, 1);
-                endDate = startDate.AddYears(1).AddDays(-1);
-            }
-            else // mois seul
-            {
-                startDate = new DateTime(DateTime.Now.Year, mois, 1);
-                endDate = startDate.AddMonths(1).AddDays(-1);
-            }
-
-            filters.Add(new[] { "start_date", ">=", startDate.ToString("yyyy-MM-dd") });
-            filters.Add(new[] { "start_date", "<=", endDate.ToString("yyyy-MM-dd") });
-        }
-
-        string filtersPart = filters.Count > 0
-            ? "&filters=" + Uri.EscapeDataString(JsonSerializer.Serialize(filters))
-            : "";
-
-        // Pagination
-        string paginationPart = $"&limit_start={(page - 1) * pageSize}&limit_page_length={pageSize}";
-
-        // Construction de l'URL finale
-        string endpoint = $"{baseUrl}{fieldsPart}{filtersPart}{paginationPart}";
-
-        try
-        {
-            // Requête principale
-            var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                _logger.LogError($"Erreur API: {response.StatusCode} - {errorContent}");
-                throw new HttpRequestException($"Erreur API: {response.StatusCode} - {errorContent}");
-            }
-
-            var json = await response.Content.ReadAsStringAsync();
-            var doc = JsonDocument.Parse(json);
-            var data = doc.RootElement.GetProperty("data");
-
-            var results = new List<Models.Salary.SalarySlip>();
-
-            // Récupération des détails pour chaque slip
-            var tasks = data.EnumerateArray()
-                .Select(async item =>
-                {
-                    var slipId = item.GetProperty("name").GetString();
-                    return await GetSalarySlipDetailAsync(slipId);
-                })
-                .ToList();
-
-            results.AddRange(await Task.WhenAll(tasks));
-
-            // Comptage total
-            string countEndpoint = $"{baseUrl}fields=[\"name\"]{filtersPart}&limit_page_length=0";
-            var countResponse = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, countEndpoint);
-            var countJson = await countResponse.Content.ReadAsStringAsync();
-            var countData = JsonDocument.Parse(countJson);
-            int totalItems = countData.RootElement.GetProperty("data").GetArrayLength();
-
-            return new PaginatedSalarySlips
-            {
-                Slips = results,
-                TotalItems = totalItems,
-                CurrentPage = page,
-                PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling(totalItems / (double)pageSize)
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erreur dans GetSalarySlipsAllAsync - Filters: {filters}", filtersPart);
-            throw new ApplicationException("Une erreur est survenue lors de la récupération des fiches de paie. Veuillez réessayer.", ex);
-        }
-    }
     
     public async Task<Models.Salary.SalarySlip> GetSalarySlipDetailAsync(string slipId)
     {
@@ -179,41 +72,14 @@ public class SalarySlipService : ISalarySlipService
     {
         try
         {
-            // 🧩 Construction de l'URL de base
             string baseUrl = "/api/resource/Salary Slip?";
             string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"start_date\"]";
 
-            // 🧩 Filtres dynamiques
             var filters = new List<object>();
 
             if (!string.IsNullOrEmpty(employeeId))
             {
                 filters.Add(new[] { "employee", "=", employeeId });
-            }
-
-            if (mois > 0 || annee > 0)
-            {
-                DateTime startDate;
-                DateTime endDate;
-
-                if (mois > 0 && annee > 0)
-                {
-                    startDate = new DateTime(annee, mois, 1);
-                    endDate = startDate.AddMonths(1).AddDays(-1);
-                }
-                else if (annee > 0)
-                {
-                    startDate = new DateTime(annee, 1, 1);
-                    endDate = startDate.AddYears(1).AddDays(-1);
-                }
-                else // mois seul
-                {
-                    startDate = new DateTime(DateTime.Now.Year, mois, 1);
-                    endDate = startDate.AddMonths(1).AddDays(-1);
-                }
-
-                filters.Add(new[] { "start_date", ">=", startDate.ToString("yyyy-MM-dd") });
-                filters.Add(new[] { "start_date", "<=", endDate.ToString("yyyy-MM-dd") });
             }
 
             string filtersPart = filters.Count > 0
@@ -223,8 +89,6 @@ public class SalarySlipService : ISalarySlipService
             string limitPart = "limit_page_length=0";
             string endpoint = $"{baseUrl}{fieldsPart}{filtersPart}&{limitPart}";
 
-
-            // 🌐 Requête HTTP GET
             var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
 
             if (!response.IsSuccessStatusCode)
@@ -243,7 +107,6 @@ public class SalarySlipService : ISalarySlipService
                 return new List<Models.Salary.SalarySlip>();
             }
 
-            // 🧩 Charger tous les détails des slips en parallèle
             var slipDetailTasks = data.EnumerateArray()
                 .Select(async item =>
                 {
@@ -252,7 +115,19 @@ public class SalarySlipService : ISalarySlipService
                 });
 
             var slips = await Task.WhenAll(slipDetailTasks);
-            return slips.ToList();
+
+            var result = slips.Where(s =>
+            {
+                if (!DateTime.TryParse(s.StartDate, out var d))
+                    return false;
+
+                bool matchMois = mois > 0 ? d.Month == mois : true;
+                bool matchAnnee = annee > 0 ? d.Year == annee : true;
+
+                return matchMois && matchAnnee;
+            }).ToList();
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -260,7 +135,6 @@ public class SalarySlipService : ISalarySlipService
             throw new ApplicationException("Une erreur est survenue lors de la récupération des fiches de paie. Veuillez réessayer.", ex);
         }
     }
-
     
     public async Task<AllSalarySlips> GetSalaryDisplayAsync(int page, int pageSize, int mois = 0, int annee = 0, string employeeId = null)
     {

@@ -33,11 +33,12 @@ namespace ERPNextNewApp.Controllers
         {
             try
             {
-                _logger.LogInformation("Appel Index avec paramètres : employeeId = {EmployeeId}, mois = {Mois}, annee = {Annee}", employeeId, mois, annee);
+                _logger.LogInformation("Appel Index avec paramètres : employeeId = {EmployeeId}, mois = {Mois}, annee = {Annee}, page = {Page}, pageSize = {PageSize}",
+                    employeeId, mois, annee, page, pageSize);
 
-                // Récupérer les fiches de paie filtrées
-                var salarySlips = await _salarySlipService.GetSalarySlipsAllAsync(page, pageSize, employeeId, mois, annee);
-        
+                // Récupération de toutes les fiches de paie filtrées (mois + année + employé)
+                var salarySlips = await _salarySlipService.GetSalarySlipsMonthYearsAsync(employeeId, mois, annee);
+
                 // Récupérer les infos de l'employé si un ID est spécifié
                 Employee employee = null;
                 if (!string.IsNullOrEmpty(employeeId))
@@ -45,17 +46,25 @@ namespace ERPNextNewApp.Controllers
                     employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
                 }
 
+                // Pagination : on découpe la liste localement
+                var totalItems = salarySlips.Count;
+                var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+                var paginatedSlips = salarySlips
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
                 var viewModel = new SalarySlipIndexViewModel
                 {
                     Employee = employee,
-                    SalarySlips = salarySlips.Slips,
+                    SalarySlips = paginatedSlips,
                     SelectedEmployeeId = employeeId,
                     SelectedMonth = mois,
                     SelectedYear = annee,
-                    Page = page,  // Utiliser le paramètre de la requête
-                    PageSize = pageSize,  // Utiliser le paramètre de la requête
-                    TotalItems = salarySlips.TotalItems,
-                    TotalPage = salarySlips.TotalPages,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalItems = totalItems,
+                    TotalPage = totalPages,
                     Months = Enumerable.Range(1, 12)
                         .Select(m => new { Id = m, Name = CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m) })
                         .ToDictionary(m => m.Id, m => m.Name),
@@ -73,6 +82,7 @@ namespace ERPNextNewApp.Controllers
                 return RedirectToAction("Index", "Home");
             }
         }
+
 
         [HttpGet]
         public async Task<IActionResult> Details(string id)
