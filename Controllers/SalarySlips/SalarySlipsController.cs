@@ -36,17 +36,14 @@ namespace ERPNextNewApp.Controllers
                 _logger.LogInformation("Appel Index avec paramètres : employeeId = {EmployeeId}, mois = {Mois}, annee = {Annee}, page = {Page}, pageSize = {PageSize}",
                     employeeId, mois, annee, page, pageSize);
 
-                // Récupération de toutes les fiches de paie filtrées (mois + année + employé)
                 var salarySlips = await _salarySlipService.GetSalarySlipsMonthYearsAsync(employeeId, mois, annee);
 
-                // Récupérer les infos de l'employé si un ID est spécifié
                 Employee employee = null;
                 if (!string.IsNullOrEmpty(employeeId))
                 {
                     employee = await _employeeService.GetEmployeeByIdAsync(employeeId);
                 }
 
-                // Pagination : on découpe la liste localement
                 var totalItems = salarySlips.Count;
                 var totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
                 var paginatedSlips = salarySlips
