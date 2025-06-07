@@ -52,6 +52,40 @@
             </form>
         </div>
     </div>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Totaux</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Total Brut</h6>
+                            <p class="card-text h4">@Model.TotalBrut.ToString("N2")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Total Déductions</h6>
+                            <p class="card-text h4">@Model.TotalDeduction.ToString("N2")</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Total Net</h6>
+                            <p class="card-text h4">@Model.TotalNet.ToString("N2")</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Tableau des salaires -->
     <div class="card">
