@@ -174,38 +174,133 @@ public class SalarySlipService : ISalarySlipService
         return salarySlip;
     }
     
+    
+    public async Task<List<Models.Salary.SalarySlip>> GetSalarySlipsMonthYearsAsync(string employeeId = null, int mois = 0, int annee = 0)
+    {
+        try
+        {
+            // 🧩 Construction de l'URL de base
+            string baseUrl = "/api/resource/Salary Slip?";
+            string fieldsPart = "fields=[\"name\",\"employee\",\"employee_name\",\"start_date\"]";
+
+            // 🧩 Filtres dynamiques
+            var filters = new List<object>();
+
+            if (!string.IsNullOrEmpty(employeeId))
+            {
+                filters.Add(new[] { "employee", "=", employeeId });
+            }
+
+            if (mois > 0 || annee > 0)
+            {
+                DateTime startDate;
+                DateTime endDate;
+
+                if (mois > 0 && annee > 0)
+                {
+                    startDate = new DateTime(annee, mois, 1);
+                    endDate = startDate.AddMonths(1).AddDays(-1);
+                }
+                else if (annee > 0)
+                {
+                    startDate = new DateTime(annee, 1, 1);
+                    endDate = startDate.AddYears(1).AddDays(-1);
+                }
+                else // mois seul
+                {
+                    startDate = new DateTime(DateTime.Now.Year, mois, 1);
+                    endDate = startDate.AddMonths(1).AddDays(-1);
+                }
+
+                filters.Add(new[] { "start_date", ">=", startDate.ToString("yyyy-MM-dd") });
+                filters.Add(new[] { "start_date", "<=", endDate.ToString("yyyy-MM-dd") });
+            }
+
+            string filtersPart = filters.Count > 0
+                ? "&filters=" + Uri.EscapeDataString(JsonSerializer.Serialize(filters))
+                : "";
+
+            string limitPart = "limit_page_length=0";
+            string endpoint = $"{baseUrl}{fieldsPart}{filtersPart}&{limitPart}";
+
+
+            // 🌐 Requête HTTP GET
+            var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError($"Erreur API: {response.StatusCode} - {errorContent}");
+                throw new HttpRequestException($"Erreur API: {response.StatusCode} - {errorContent}");
+            }
+
+            var json = await response.Content.ReadAsStringAsync();
+            var doc = JsonDocument.Parse(json);
+
+            if (!doc.RootElement.TryGetProperty("data", out var data))
+            {
+                _logger.LogWarning("Réponse API ne contient pas la propriété 'data'.");
+                return new List<Models.Salary.SalarySlip>();
+            }
+
+            // 🧩 Charger tous les détails des slips en parallèle
+            var slipDetailTasks = data.EnumerateArray()
+                .Select(async item =>
+                {
+                    string slipId = item.GetProperty("name").GetString();
+                    return await GetSalarySlipDetailAsync(slipId);
+                });
+
+            var slips = await Task.WhenAll(slipDetailTasks);
+            return slips.ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur dans GetSalarySlipsMonthYearsAsync - employeeId={employeeId}, mois={mois}, annee={annee}", employeeId, mois, annee);
+            throw new ApplicationException("Une erreur est survenue lors de la récupération des fiches de paie. Veuillez réessayer.", ex);
+        }
+    }
+
+    
     public async Task<AllSalarySlips> GetSalaryDisplayAsync(int page, int pageSize, int mois = 0, int annee = 0, string employeeId = null)
     {
-        var slips = await GetSalarySlipsAllAsync(page, pageSize, employeeId, mois, annee);
+        var allSlips = await GetSalarySlipsMonthYearsAsync(employeeId, mois, annee);
+        int totalItems = allSlips.Count;
+        int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+
+        // ✅ Pagination
+        var pagedSlips = allSlips
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToList();
+
         var result = new List<SalaryDisplayRow>();
 
+        // ✅ Totaux globaux (sur allSlips)
+        decimal totalNet = allSlips.Sum(slip => slip.NetPay);
+        decimal totalBrut = allSlips.SelectMany(slip => slip.Earnings).Sum(e => e.Amount);
+        decimal totalDeduction = allSlips.SelectMany(slip => slip.Deductions).Sum(d => d.Amount);
+
+        // ✅ Pour la page courante seulement
         var totalEarnings = new Dictionary<string, decimal>();
         var totalDeductions = new Dictionary<string, decimal>();
-        decimal totalNet = 0;
-        decimal totalBrut = 0; // 👉 Nouveau: Total des gains bruts
-        decimal totalDeduction = 0;
-
-        // 👉 Étape 1 : collecter tous les types uniques d'earnings et deductions
         var allEarningKeys = new HashSet<string>();
         var allDeductionKeys = new HashSet<string>();
 
-        foreach (var slip in slips.Slips)
+        // Trouver tous les composants présents dans la page actuelle
+        foreach (var slip in pagedSlips)
         {
             foreach (var earning in slip.Earnings)
             {
                 allEarningKeys.Add(earning.SalaryComponentName);
-                totalBrut += earning.Amount;
             }
-
             foreach (var deduction in slip.Deductions)
             {
                 allDeductionKeys.Add(deduction.SalaryComponentName);
-                totalDeduction += deduction.Amount;
             }
         }
 
-        // 👉 Étape 2 : traiter chaque slip avec initialisation à 0 pour les éléments manquants
-        foreach (var slip in slips.Slips)
+        foreach (var slip in pagedSlips)
         {
             var row = new SalaryDisplayRow
             {
@@ -217,15 +312,9 @@ public class SalarySlipService : ISalarySlipService
                 DeductionsTotal = new Dictionary<string, decimal>()
             };
 
-            totalNet += slip.NetPay;
-
-            // Initialiser tous les earnings à 0
             foreach (var key in allEarningKeys)
-            {
                 row.Earnings[key] = 0;
-            }
 
-            // Remplir les earnings présents
             foreach (var earning in slip.Earnings)
             {
                 row.Earnings[earning.SalaryComponentName] += earning.Amount;
@@ -236,13 +325,9 @@ public class SalarySlipService : ISalarySlipService
                 totalEarnings[earning.SalaryComponentName] += earning.Amount;
             }
 
-            // Initialiser tous les deductions à 0
             foreach (var key in allDeductionKeys)
-            {
                 row.DeductionsTotal[key] = 0;
-            }
 
-            // Remplir les deductions présentes
             foreach (var deduction in slip.Deductions)
             {
                 row.DeductionsTotal[deduction.SalaryComponentName] += deduction.Amount;
@@ -259,15 +344,19 @@ public class SalarySlipService : ISalarySlipService
         return new AllSalarySlips
         {
             Rows = result,
-            TotalItems = slips.TotalItems,
-            CurrentPage = slips.CurrentPage,
-            PageSize = slips.PageSize,
-            TotalPages = slips.TotalPages,
-            TotalEarnings = totalEarnings,
-            TotalDeductions = totalDeductions,
+            TotalItems = totalItems,
+            CurrentPage = page,
+            PageSize = pageSize,
+            TotalPages = totalPages,
+
+            // 👇 Totaux globaux (inchangés sur toutes les pages)
             TotalNet = totalNet,
-            TotalBrut = totalBrut, 
-            TotalDeduction = totalDeduction
+            TotalBrut = totalBrut,
+            TotalDeduction = totalDeduction,
+
+            // 👇 Totaux locaux (pour la page en cours)
+            TotalEarnings = totalEarnings,
+            TotalDeductions = totalDeductions
         };
     }
     
