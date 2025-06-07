@@ -1,11 +1,14 @@
 @model ERPNextNewApp.Models.Salary.StatistiqueTotal
 @{
-    ViewData["Title"] = "Graphique des Statistiques Salaires";
+ViewData["Title"] = "Graphique des Statistiques Salaires";
 
-    var labels = Model.Salaries.Select(s => s.MonthLabel).ToArray();
-    var dataNet = Model.Salaries.Select(s => s.TotalNet).ToArray();
-    var dataEarnings = Model.Salaries.Select(s => s.TotalEarnings.Values.Sum()).ToArray();
-    var dataDeductions = Model.Salaries.Select(s => s.TotalDeductions.Values.Sum()).ToArray();
+var TotalNet = Model.TotalNet;
+var TotalBrut = Model.TotalBut;
+var TotalDeduction = Model.TotalDeduction;
+var labels = Model.Salaries.Select(s => s.MonthLabel).ToArray();
+var dataNet = Model.Salaries.Select(s => s.TotalNet).ToArray();
+var dataEarnings = Model.Salaries.Select(s => s.TotalEarnings.Values.Sum()).ToArray();
+var dataDeductions = Model.Salaries.Select(s => s.TotalDeductions.Values.Sum()).ToArray();
 }
 
 <div class="container-fluid mt-4">
@@ -21,7 +24,7 @@
                         <option value="0">Toutes années</option>
                         @for (int i = 2028; i >= 2028 - 5; i--)
                         {
-                            <option value="@i" selected="@(i == ViewBag.SelectedYear)">@i</option>
+                        <option value="@i" selected="@(i == ViewBag.SelectedYear)">@i</option>
                         }
                     </select>
                 </div>
@@ -42,69 +45,106 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        const ctx = document.getElementById('statistiqueChart').getContext('2d');
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = @Html.Raw(Json.Serialize(labels));
+    const dataNet = @Html.Raw(Json.Serialize(dataNet));
+    const dataEarnings = @Html.Raw(Json.Serialize(dataEarnings));
+    const dataDeductions = @Html.Raw(Json.Serialize(dataDeductions));
 
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: @Html.Raw(Json.Serialize(labels)),
-                datasets: [
-                    {
-                        label: 'Salaire Brut',
-                        data: @Html.Raw(Json.Serialize(dataEarnings)),
-                        borderColor: 'rgba(40, 167, 69, 1)',
-                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                        tension: 0.3,
-                        fill: true,
-                        pointBackgroundColor: 'rgba(40, 167, 69, 1)'
-                    },
-                    {
-                        label: 'Déductions',
-                        data: @Html.Raw(Json.Serialize(dataDeductions)),
-                        borderColor: 'rgba(220, 53, 69, 1)',
-                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                        tension: 0.3,
-                        fill: true,
-                        pointBackgroundColor: 'rgba(220, 53, 69, 1)'
-                    },
-                    {
-                        label: 'Salaire Net',
-                        data: @Html.Raw(Json.Serialize(dataNet)),
-                        borderColor: 'rgba(0, 123, 255, 1)',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        tension: 0.3,
-                        fill: true,
-                        pointBackgroundColor: 'rgba(0, 123, 255, 1)'
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'top'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Répartition mensuelle des salaires',
-                        font: {
-                            size: 18
-                        }
-                    }
+    const totalNet = @Html.Raw(Json.Serialize(TotalNet));
+    const totalBrut = @Html.Raw(Json.Serialize(TotalBrut));
+    const totalDeduction = @Html.Raw(Json.Serialize(TotalDeduction));
+
+    // Plugin personnalisé pour afficher les totaux avec couleur
+    Chart.register({
+        id: 'customTotals',
+        afterDraw(chart) {
+            const { ctx, chartArea: { top, right } } = chart;
+            ctx.save();
+            ctx.font = '14px Arial';
+            ctx.textAlign = 'right';
+
+            const lineHeight = 18;
+            const x = right - 10;
+            let y = top + 20;
+
+            ctx.fillStyle = 'rgba(40, 167, 69, 1)';
+            ctx.fillText('Total Brut : ' + totalBrut.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar', x, y);
+
+            y += lineHeight;
+            ctx.fillStyle = 'rgba(220, 53, 69, 1)';
+            ctx.fillText('Total Déductions : ' + totalDeduction.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar', x, y);
+
+            y += lineHeight;
+            ctx.fillStyle = 'rgba(0, 123, 255, 1)';
+            ctx.fillText('Total Net : ' + totalNet.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar', x, y);
+
+            ctx.restore();
+        }
+    });
+
+    const ctx = document.getElementById('statistiqueChart').getContext('2d');
+
+    const chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Salaire Brut',
+                    data: dataEarnings,
+                    borderColor: 'rgba(40, 167, 69, 1)',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(40, 167, 69, 1)'
                 },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            callback: function (value) {
-                                return value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " Ar";
-                            }
+                {
+                    label: 'Déductions',
+                    data: dataDeductions,
+                    borderColor: 'rgba(220, 53, 69, 1)',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(220, 53, 69, 1)'
+                },
+                {
+                    label: 'Salaire Net',
+                    data: dataNet,
+                    borderColor: 'rgba(0, 123, 255, 1)',
+                    backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                    tension: 0.3,
+                    fill: true,
+                    pointBackgroundColor: 'rgba(0, 123, 255, 1)'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'top'
+                },
+                title: {
+                    display: true,
+                    text: 'Répartition mensuelle des salaires',
+                    font: {
+                        size: 18
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " Ar";
                         }
                     }
                 }
             }
-        });
-    </script>
+        }
+    });
+</script>
 }
