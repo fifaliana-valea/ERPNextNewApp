@@ -42,6 +42,17 @@ public class ImportService : IImportService
                     BirthDate = DateTime.ParseExact(line[5].Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture),
                     Company = line[6].Trim()
                 };
+                if (string.IsNullOrWhiteSpace(emp.Id)) throw new Exception("Id vide");
+                if (string.IsNullOrWhiteSpace(emp.LastName)) throw new Exception("Last Name vide");
+                if (string.IsNullOrWhiteSpace(emp.FirstName)) throw new Exception("FirstName vide");
+                if (string.IsNullOrWhiteSpace(emp.Gender)) throw new Exception("Genre vide");
+                if (string.IsNullOrWhiteSpace(emp.Company)) throw new Exception("Company vide");
+                if (emp.HireDate == DateTime.MinValue) throw new Exception("HireDate vide ou invalide");
+                if (emp.BirthDate == DateTime.MinValue) throw new Exception("BirthDate vide ou invalide");
+                if (emp.HireDate == null) throw new Exception("HireDate non spécifiée");
+                if (emp.BirthDate == null) throw new Exception("BirthDate non spécifiée");
+
+
 
                 if (string.IsNullOrWhiteSpace(emp.Id)) throw new Exception("ID vide");
                 if (emp.HireDate < emp.BirthDate) throw new Exception("Date embauche avant naissance");
@@ -81,8 +92,21 @@ public class ImportService : IImportService
                     Company = line.Length > 5 ? line[5].Trim() : null
                 };
 
+                // Vérification des champs obligatoires
                 if (string.IsNullOrWhiteSpace(structure.StructureCode)) throw new Exception("Code vide");
-                if (structure.Type != "earning" && structure.Type != "deduction") throw new Exception("Type invalide");
+                if (string.IsNullOrWhiteSpace(structure.Name)) throw new Exception("Nom vide");
+                if (string.IsNullOrWhiteSpace(structure.Abbreviation)) throw new Exception("Abréviation vide");
+                if (string.IsNullOrWhiteSpace(structure.Type)) throw new Exception("Type vide");
+                if (string.IsNullOrWhiteSpace(structure.Formula)) throw new Exception("Formule vide");
+                if (string.IsNullOrWhiteSpace(structure.Company)) throw new Exception("Société vide");
+
+                // Vérification du type
+                if (structure.Type != "earning" && structure.Type != "deduction")
+                    throw new Exception("Type invalide (doit être 'earning' ou 'deduction')");
+
+                // Vérification de la formule (doit être >= 0 si numérique)
+                if (!structure.EstFormuleValide())
+                    throw new Exception("La formule doit être un nombre positif si elle est numérique");
 
                 result.Add(structure);
             }
@@ -109,15 +133,31 @@ public class ImportService : IImportService
                 if (line.Length < 4)
                     throw new Exception("Colonnes manquantes");
 
+                // Validation StartDate
+                if (!DateTime.TryParseExact(line[0].Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out DateTime startDate))
+                    throw new Exception("Date de début invalide (format attendu : dd/MM/yyyy)");
+
+                var employeeId = line[1].Trim();
+                if (string.IsNullOrWhiteSpace(employeeId))
+                    throw new Exception("ID employé vide");
+
+                // Validation BaseAmount
+                if (!decimal.TryParse(line[2].Trim(), NumberStyles.Number, CultureInfo.InvariantCulture, out decimal baseAmount))
+                    throw new Exception("Montant de base invalide");
+                if (baseAmount < 0)
+                    throw new Exception("Montant de base ne peut pas être négatif");
+
+                var structureCode = line[3].Trim();
+                if (string.IsNullOrWhiteSpace(structureCode))
+                    throw new Exception("Code de structure vide");
+
                 var slip = new SalarySlipDto
                 {
-                    StartDate = DateTime.ParseExact(line[0].Trim(), "dd/MM/yyyy", CultureInfo.InvariantCulture),
-                    EmployeeId = line[1].Trim(),
-                    BaseAmount = decimal.Parse(line[2].Trim()),
-                    StructureCode = line[3].Trim()
+                    StartDate = startDate,
+                    EmployeeId = employeeId,
+                    BaseAmount = baseAmount,
+                    StructureCode = structureCode
                 };
-
-                if (string.IsNullOrWhiteSpace(slip.EmployeeId)) throw new Exception("ID employé vide");
 
                 result.Add(slip);
             }
@@ -129,7 +169,6 @@ public class ImportService : IImportService
 
         return (result, errors);
     }
-
      public async Task<List<string>> ImportAllAsync(
         string employeeFile,
         string structureFile,
