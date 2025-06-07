@@ -134,9 +134,9 @@
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th class="text-center">
-                                    <input type="checkbox" id="selectAll">
-                                </th>
+                                @* <th class="text-center"> *@
+                                @*     <input type="checkbox" id="selectAll"> *@
+                                @* </th> *@
                                 <th>Nom & Prénom</th>
                                 <th>Poste</th>
                                 <th>Département</th>
@@ -149,9 +149,9 @@
                             @foreach (var employee in Model.Employees)
                             {
                                 <tr data-employee-name="@employee.FullName">
-                                    <td class="text-center">
-                                        <input type="checkbox" class="employee-check">
-                                    </td>
+                                    @* <td class="text-center"> *@
+                                    @*     <input type="checkbox" class="employee-check"> *@
+                                    @* </td> *@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if (!string.IsNullOrEmpty(employee.PhotoUrl))
@@ -208,9 +208,9 @@
                 <div class="d-flex justify-content-between align-items-center p-3 border-top">
                     <!-- Bouton de suppression -->
                     <div>
-                        <button class="btn btn-outline-danger btn-sm" id="deleteSelected">
-                            <i class="fas fa-trash-alt me-1"></i> Supprimer sélection
-                        </button>
+                        @* <button class="btn btn-outline-danger btn-sm" id="deleteSelected"> *@
+                        @*     <i class="fas fa-trash-alt me-1"></i> Supprimer sélection *@
+                        @* </button> *@
                     </div>
 
                     <!-- Pagination -->
