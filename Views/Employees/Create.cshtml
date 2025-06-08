@@ -1,0 +1,117 @@
+@model ERPNextNewApp.ViewModels.Employees.EmployeeViewModels
+
+@{
+    bool isEdit = Model.Employee != null && !string.IsNullOrEmpty(Model.Employee.Name);
+    ViewBag.Title = isEdit ? "Modifier un employé" : "Ajouter un employé";
+    string formAction = isEdit ? "Edit" : "Create";
+}
+
+<div class="container-fluid mt-4">
+    <h2 class="mb-4">@ViewBag.Title</h2>
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success">@ViewBag.Success</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <form asp-controller="Employees" asp-action="@formAction" method="post">
+        <div class="row mb-3">
+            <input type="hidden" asp-for="Employee.Id" />
+            <div class="col-md-6">
+                <label asp-for="Employee.Name" class="form-label">Nom</label>
+                <input asp-for="Employee.Name" class="form-control" readonly="@isEdit"/>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Employee.FirstName" class="form-label">Prénom</label>
+                <input asp-for="Employee.FirstName" class="form-control"/>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Employee.Position" class="form-label">Désignation</label>
+                <select asp-for="Employee.Position" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach (var des in Model.Designations ?? new List<string>())
+                    {
+                        <option value="@des" selected="@(Model.Employee?.Position == des)">@des</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Employee.Department" class="form-label">Département</label>
+                <select asp-for="Employee.Department" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach (var dep in Model.Departments ?? new List<Department>())
+                    {
+                        <option value="@dep.Name" selected="@(Model.Employee?.Department == dep.Name)">@dep.Name</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Employee.DateOfBirth" class="form-label">Date de naissance</label>
+                <input asp-for="Employee.DateOfBirth" class="form-control" type="date" />
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Employee.HiringDate" class="form-label">Date d'embauche</label>
+                <input asp-for="Employee.HiringDate" class="form-control" type="date" />
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Employee.Company" class="form-label">Entreprise</label>
+                <select asp-for="Employee.Company" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach (var company in Model.CompanyNames ?? new List<string>())
+                    {
+                        <option value="@company" selected="@(Model.Employee?.Company == company)">@company</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Employee.Status" class="form-label">Statut</label>
+                <select asp-for="Employee.Status" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    <option value="Active" selected="@(Model.Employee?.Status == "Active")">Actif</option>
+                    <option value="Inactive" selected="@(Model.Employee?.Status == "Inactive")">En congé</option>
+                    <option value="Suspended" selected="@(Model.Employee?.Status == "Suspended")">En formation</option>
+                    <option value="Left" selected="@(Model.Employee?.Status == "Left")">Démissionné</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Employee.Gender" class="form-label">Genre</label>
+                <select asp-for="Employee.Gender" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach (var gender in Model.Genders ?? new List<Gender>())
+                    {
+                        <option value="@gender.Name" selected="@(Model.Employee?.Gender == gender.Name)">@gender.Name</option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Employee.PhotoUrl" class="form-label">URL de la photo</label>
+                <input asp-for="Employee.PhotoUrl" class="form-control" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>

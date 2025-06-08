@@ -314,8 +314,8 @@ public class SalarySlipService : ISalarySlipService
             result.Add(new StatistiqueSalary
             {
                 MonthLabel = monthNames[i],
-                TotalEarnings = allEarningKeys.ToDictionary(k => k, v => 0m),
-                TotalDeductions = allDeductionKeys.ToDictionary(k => k, v => 0m),
+                TotalMonthEarnings  = allEarningKeys.ToDictionary(k => k, v => 0m),
+                TotalMonthDeductions = allDeductionKeys.ToDictionary(k => k, v => 0m),
                 TotalNet = 0
             });
         }
@@ -344,14 +344,14 @@ public class SalarySlipService : ISalarySlipService
 
             foreach (var earning in slip.Earnings)
             {
-                row.TotalEarnings[earning.SalaryComponentName] += earning.Amount;
+                row.TotalMonthEarnings[earning.SalaryComponentName] += earning.Amount;
                 globalEarnings[earning.SalaryComponentName] += earning.Amount;
                 totalSalaryBut += earning.Amount;
             }
 
             foreach (var deduction in slip.Deductions)
             {
-                row.TotalDeductions[deduction.SalaryComponentName] += deduction.Amount;
+                row.TotalMonthDeductions[deduction.SalaryComponentName] += deduction.Amount;
                 globalDeductions[deduction.SalaryComponentName] += deduction.Amount;
                 totalDeductions += deduction.Amount;
             }

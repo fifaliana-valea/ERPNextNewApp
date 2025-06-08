@@ -83,7 +83,7 @@
                             <!-- En-têtes pour les gains -->
                             @{
                                 var allEarningTypes = Model.Salaries
-                                    .SelectMany(s => s.TotalEarnings.Keys)
+                                    .SelectMany(s => s.TotalMonthEarnings.Keys)
                                     .Distinct()
                                     .OrderBy(k => k)
                                     .ToList();
@@ -96,7 +96,7 @@
                             <!-- En-têtes pour les déductions -->
                             @{
                                 var allDeductionTypes = Model.Salaries
-                                    .SelectMany(s => s.TotalDeductions.Keys)
+                                    .SelectMany(s => s.TotalMonthDeductions.Keys)
                                     .Distinct()
                                     .OrderBy(k => k)
                                     .ToList();
@@ -122,7 +122,7 @@
                                     @foreach (var earningType in allEarningTypes)
                                     {
                                         <td class="text-end">
-                                            @(salary.TotalEarnings.ContainsKey(earningType) ? salary.TotalEarnings[earningType].ToString("N2") : "0.00")
+                                            @(salary.TotalMonthEarnings.ContainsKey(earningType) ? salary.TotalMonthEarnings[earningType].ToString("N2") : "0.00")
                                         </td>
                                     }
                                     
@@ -130,7 +130,7 @@
                                     @foreach (var deductionType in allDeductionTypes)
                                     {
                                         <td class="text-end">
-                                            @(salary.TotalDeductions.ContainsKey(deductionType) ? salary.TotalDeductions[deductionType].ToString("N2") : "0.00")
+                                            @(salary.TotalMonthDeductions.ContainsKey(deductionType) ? salary.TotalMonthDeductions[deductionType].ToString("N2") : "0.00")
                                         </td>
                                     }
                                     
