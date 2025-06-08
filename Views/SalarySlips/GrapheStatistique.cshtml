@@ -7,8 +7,8 @@ var TotalBrut = Model.TotalBut;
 var TotalDeduction = Model.TotalDeduction;
 var labels = Model.Salaries.Select(s => s.MonthLabel).ToArray();
 var dataNet = Model.Salaries.Select(s => s.TotalNet).ToArray();
-var dataEarnings = Model.Salaries.Select(s => s.TotalEarnings.Values.Sum()).ToArray();
-var dataDeductions = Model.Salaries.Select(s => s.TotalDeductions.Values.Sum()).ToArray();
+var dataEarnings = Model.Salaries.Select(s => s.TotalMonthEarnings.Values.Sum()).ToArray();
+var dataDeductions = Model.Salaries.Select(s => s.TotalMonthDeductions.Values.Sum()).ToArray();
 }
 
 <div class="container-fluid mt-4">
