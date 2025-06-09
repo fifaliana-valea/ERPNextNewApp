@@ -7,7 +7,7 @@ public class SalaryComponent
     [JsonPropertyName("salary_component")]
     public string SalaryComponentName { get; set; }   // Nom du composant (ex: Basic, Transport)
 
-    [JsonPropertyName("abbr")]
+    [JsonPropertyName("salary_component_abbr")]
     public string Abbr { get; set; }                  // Abréviation (ex: BAS)
 
     [JsonPropertyName("type")]
@@ -16,6 +16,5 @@ public class SalaryComponent
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }               // Montant
 
-    [JsonPropertyName("description")]
-    public string Description { get; set; }            // Optionnel
+    public string? Formula { get; set; }               // Optionnel
 }

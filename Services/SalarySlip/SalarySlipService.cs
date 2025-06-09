@@ -60,8 +60,8 @@ public class SalarySlipService : ISalarySlipService
             GrossPay = data.GetProperty("gross_pay").GetDecimal(),
             Currency = data.GetProperty("currency").GetString(),
             Status = data.GetProperty("status").GetString(),
-            Earnings = JsonSerializer.Deserialize<List<SalaryComponent>>(data.GetProperty("earnings").ToString()),
-            Deductions = JsonSerializer.Deserialize<List<SalaryComponent>>(data.GetProperty("deductions").ToString())
+            Earnings = JsonSerializer.Deserialize<List<Models.Salary.SalaryComponent>>(data.GetProperty("earnings").ToString()),
+            Deductions = JsonSerializer.Deserialize<List<Models.Salary.SalaryComponent>>(data.GetProperty("deductions").ToString())
         };
 
         return salarySlip;
@@ -559,7 +559,7 @@ public class SalarySlipService : ISalarySlipService
             .SetPaddingBottom(5);
     }
 
-    private Table CreateComponentTable(string title, List<SalaryComponent> components, decimal total, string currency, PdfFont fontBold, PdfFont fontNormal, DeviceRgb primaryColor, DeviceRgb lightGray)
+    private Table CreateComponentTable(string title, List<Models.Salary.SalaryComponent> components, decimal total, string currency, PdfFont fontBold, PdfFont fontNormal, DeviceRgb primaryColor, DeviceRgb lightGray)
     {
         var table = new Table(new float[] { 70, 30 })
             .SetWidth(UnitValue.CreatePercentValue(100));
