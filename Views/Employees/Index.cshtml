@@ -9,6 +9,15 @@
 }
 
 <div class="container-fluid">
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success">@ViewBag.Success</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="mb-0">Liste des Employés</h2>
         <a href="@Url.Action("Create", "Employees")" class="btn btn-primary">
@@ -31,12 +40,12 @@
                     <div class="col-md-4">
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-search"></i></span>
-                            <input type="text" class="form-control" name="nom" 
-                                   placeholder="Rechercher par nom..." 
+                            <input type="text" class="form-control" name="nom"
+                                   placeholder="Rechercher par nom..."
                                    value="@Model.Filters.Nom">
                         </div>
                     </div>
-                    
+
                     <!-- Filtre par département -->
                     <div class="col-md-3">
                         <select class="form-select" name="departement">
@@ -45,7 +54,7 @@
                             {
                                 foreach (var dept in departments)
                                 {
-                                    <option value="@dept.DepartmentName" 
+                                    <option value="@dept.DepartmentName"
                                             selected="@(Model.Filters.Departement == dept.DepartmentName)">
                                         @dept.DepartmentName
                                     </option>
@@ -53,7 +62,7 @@
                             }
                         </select>
                     </div>
-                    
+
                     <!-- Filtre par statut -->
                     <div class="col-md-3">
                         <select class="form-select" name="status">
@@ -64,7 +73,7 @@
                             <option value="Left" selected="@(Model.Filters.Status == "Left")">Démissionné</option>
                         </select>
                     </div>
-                    
+
                     <!-- Boutons d'action -->
                     <div class="col-md-2 d-flex">
                         <button type="submit" class="btn btn-primary w-100 me-2">
@@ -75,23 +84,23 @@
                         </a>
                     </div>
                 </div>
-                
+
                 <!-- Filtres avancés -->
                 <div class="row g-3 mt-3">
                     <!-- Date d'embauche début -->
                     <div class="col-md-3">
                         <label class="form-label">Date d'embauche début</label>
-                        <input type="date" class="form-control" name="dateEmbaucheDebut" 
+                        <input type="date" class="form-control" name="dateEmbaucheDebut"
                                value="@(Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"))">
                     </div>
-                    
+
                     <!-- Date d'embauche fin -->
                     <div class="col-md-3">
                         <label class="form-label">Date d'embauche fin</label>
-                        <input type="date" class="form-control" name="dateEmbaucheFin" 
+                        <input type="date" class="form-control" name="dateEmbaucheFin"
                                value="@(Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd"))">
                     </div>
-                    
+
                     <!-- Filtre par genre -->
                     <div class="col-md-3">
                         <label class="form-label">Genre</label>
@@ -101,7 +110,7 @@
                             {
                                 foreach (var gender in genders)
                                 {
-                                    <option value="@gender.Name" 
+                                    <option value="@gender.Name"
                                             selected="@(Model.Filters.Genre == gender.Name)">
                                         @gender.Name
                                     </option>
@@ -112,7 +121,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Paramètres de pagination cachés -->
         <input type="hidden" name="page" value="1" id="pageInput">
         <input type="hidden" name="pageSize" value="@Model.PageSize">
@@ -133,77 +142,79 @@
                 <div class="table-responsive">
                     <table class="table table-hover align-middle">
                         <thead>
-                            <tr>
-                                @* <th class="text-center"> *@
-                                @*     <input type="checkbox" id="selectAll"> *@
-                                @* </th> *@
-                                <th>Nom & Prénom</th>
-                                <th>Poste</th>
-                                <th>Département</th>
-                                <th>Date d'embauche</th>
-                                <th>Statut</th>
-                                <th class="text-center">Actions</th>
-                            </tr>
+                        <tr>
+                            @* <th class="text-center"> *@
+                            @*     <input type="checkbox" id="selectAll"> *@
+                            @* </th> *@
+                            <th>Nom & Prénom</th>
+                            <th>Date de naissance</th>
+                            <th>Département</th>
+                            <th>Date d'embauche</th>
+                            <th>Statut</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
                         </thead>
                         <tbody>
-                            @foreach (var employee in Model.Employees)
-                            {
-                                <tr data-employee-name="@employee.FullName">
-                                    @* <td class="text-center"> *@
-                                    @*     <input type="checkbox" class="employee-check"> *@
-                                    @* </td> *@
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            @if (!string.IsNullOrEmpty(employee.PhotoUrl))
-                                            {
-                                                <img src="@employee.PhotoUrl" 
-                                                     class="rounded-circle me-3" width="40" height="40">
-                                            }
-                                            else
-                                            {
-                                                <div class="rounded-circle bg-secondary me-3" 
-                                                     style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
-                                                    <i class="fas fa-user text-white"></i>
-                                                </div>
-                                            }
-                                            <div>
-                                                <div class="fw-bold">@employee.FullName</div>
-                                                <div class="text-muted small">@employee.Email</div>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td>@employee.Position</td>
-                                    <td>@employee.Department</td>
-                                    <td>@employee.HiringDate?.ToString("dd/MM/yyyy")</td>
-                                    <td>
-                                        @{
-                                            var badgeClass = "bg-secondary";
-                                            if (employee.Status == "Actif") badgeClass = "bg-success";
-                                            else if (employee.Status == "En congé") badgeClass = "bg-warning text-dark";
-                                            else if (employee.Status == "Démissionné") badgeClass = "bg-danger";
+                        @foreach (var employee in Model.Employees)
+                        {
+                            <tr data-employee-name="@employee.FullName">
+                                @* <td class="text-center"> *@
+                                @*     <input type="checkbox" class="employee-check"> *@
+                                @* </td> *@
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        @if (!string.IsNullOrEmpty(employee.PhotoUrl))
+                                        {
+                                            <img src="@employee.PhotoUrl"
+                                                 class="rounded-circle me-3" width="40" height="40">
                                         }
-                                        <span class="badge @badgeClass">@employee.Status</span>
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group">
-                                            <a class="btn btn-sm btn-outline-primary" title="Voir"
-                                               href="@Url.Action("Index", "SalarySlips", new { employeeId = employee.Id })">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
-                                            <button class="btn btn-sm btn-outline-secondary" title="Modifier">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-danger" title="Supprimer">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
+                                        else
+                                        {
+                                            <div class="rounded-circle bg-secondary me-3"
+                                                 style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;">
+                                                <i class="fas fa-user text-white"></i>
+                                            </div>
+                                        }
+                                        <div>
+                                            <div class="fw-bold">@employee.FullName</div>
+                                            <div class="text-muted small">@employee.Email</div>
                                         </div>
-                                    </td>
-                                </tr>
-                            }
+                                    </div>
+                                </td>
+                                <td>@employee.DateOfBirth?.ToString("dd/MM/yyyy")</td>
+                                <td>@employee.Department</td>
+                                <td>@employee.HiringDate?.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @{
+                                        var badgeClass = "bg-secondary";
+                                        if (employee.Status == "Actif") badgeClass = "bg-success";
+                                        else if (employee.Status == "En congé") badgeClass = "bg-warning text-dark";
+                                        else if (employee.Status == "Démissionné") badgeClass = "bg-danger";
+                                    }
+                                    <span class="badge @badgeClass">@employee.Status</span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group">
+                                        <a class="btn btn-sm btn-outline-primary" title="Voir"
+                                           href="@Url.Action("Index", "SalarySlips", new { employeeId = employee.Id })">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-secondary" title="Modifier"
+                                           href="@Url.Action("Edit", "Employees", new { employeeId = employee.Id })">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a class="btn btn-sm btn-outline-danger" title="Supprimer"
+                                           href="@Url.Action("Delete", "Employees", new { employeeId = employee.Id })">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                         </tbody>
                     </table>
                 </div>
-                
+
                 <!-- Pagination -->
                 <div class="d-flex justify-content-between align-items-center p-3 border-top">
                     <!-- Bouton de suppression -->
@@ -218,16 +229,17 @@
                         <ul class="pagination mb-0">
                             <!-- Page précédente -->
                             <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
-                                <a class="page-link" href="@Url.Action("Index", new {
-                                    page = Model.CurrentPage - 1,
-                                    pageSize = Model.PageSize,
-                                    nom = Model.Filters.Nom,
-                                    departement = Model.Filters.Departement,
-                                    status = Model.Filters.Status,
-                                    genre = Model.Filters.Genre,
-                                    dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
-                                    dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
-                                })">
+                                <a class="page-link" href="@Url.Action("Index", new
+                                                           {
+                                                               page = Model.CurrentPage - 1,
+                                                               pageSize = Model.PageSize,
+                                                               nom = Model.Filters.Nom,
+                                                               departement = Model.Filters.Departement,
+                                                               status = Model.Filters.Status,
+                                                               genre = Model.Filters.Genre,
+                                                               dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                                               dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                                           })">
                                     Précédent
                                 </a>
                             </li>
@@ -236,16 +248,17 @@
                             @for (int i = 1; i <= Model.TotalPages; i++)
                             {
                                 <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
-                                    <a class="page-link" href="@Url.Action("Index", new {
-                                        page = i,
-                                        pageSize = Model.PageSize,
-                                        nom = Model.Filters.Nom,
-                                        departement = Model.Filters.Departement,
-                                        status = Model.Filters.Status,
-                                        genre = Model.Filters.Genre,
-                                        dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
-                                        dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
-                                    })">
+                                    <a class="page-link" href="@Url.Action("Index", new
+                                                               {
+                                                                   page = i,
+                                                                   pageSize = Model.PageSize,
+                                                                   nom = Model.Filters.Nom,
+                                                                   departement = Model.Filters.Departement,
+                                                                   status = Model.Filters.Status,
+                                                                   genre = Model.Filters.Genre,
+                                                                   dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                                                   dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                                               })">
                                         @i
                                     </a>
                                 </li>
@@ -253,16 +266,17 @@
 
                             <!-- Page suivante -->
                             <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
-                                <a class="page-link" href="@Url.Action("Index", new {
-                                    page = Model.CurrentPage + 1,
-                                    pageSize = Model.PageSize,
-                                    nom = Model.Filters.Nom,
-                                    departement = Model.Filters.Departement,
-                                    status = Model.Filters.Status,
-                                    genre = Model.Filters.Genre,
-                                    dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
-                                    dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
-                                })">
+                                <a class="page-link" href="@Url.Action("Index", new
+                                                           {
+                                                               page = Model.CurrentPage + 1,
+                                                               pageSize = Model.PageSize,
+                                                               nom = Model.Filters.Nom,
+                                                               departement = Model.Filters.Departement,
+                                                               status = Model.Filters.Status,
+                                                               genre = Model.Filters.Genre,
+                                                               dateEmbaucheDebut = Model.Filters.DateEmbaucheDebut?.ToString("yyyy-MM-dd"),
+                                                               dateEmbaucheFin = Model.Filters.DateEmbaucheFin?.ToString("yyyy-MM-dd")
+                                                           })">
                                     Suivant
                                 </a>
                             </li>

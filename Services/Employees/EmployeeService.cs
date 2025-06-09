@@ -1,8 +1,12 @@
+using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Web;
 using ERPNextNewApp.Models;
 using ERPNextNewApp.Services.Login;
+using Newtonsoft.Json;
+using JsonException = System.Text.Json.JsonException;
+using JsonSerializer = System.Text.Json.JsonSerializer;
 
 namespace ERPNextNewApp.Services.Employees;
 
@@ -54,7 +58,7 @@ public class EmployeeService : IEmployeeService
             var query = HttpUtility.ParseQueryString(string.Empty);
             query["fields"] = JsonSerializer.Serialize(new[]
             {
-                "name", "employee_name", "designation", "department", "date_of_joining",
+                "name", "employee_name", "designation","date_of_birth", "department", "date_of_joining",
                 "status", "gender", "company_email", "image"
             });
             query["limit_start"] = ((page - 1) * pageSize).ToString();
@@ -92,7 +96,7 @@ public class EmployeeService : IEmployeeService
 
     public async Task<List<Employee>> GetEmployeesAllAsync()
     {
-        const string endpoint = "/api/resource/Employee?fields=[\"name\",\"employee_name\",\"designation\",\"department\",\"date_of_joining\",\"status\",\"gender\",\"company_email\",\"image\"]&limit=0";
+        const string endpoint = "/api/resource/Employee?fields=[\"name\",\"employee_name\",\"designation\",\"department\",\"date_of_birth\",\"date_of_joining\",\"status\",\"gender\",\"company_email\",\"image\"]&limit=0";
 
         try
         {
@@ -218,6 +222,126 @@ public class EmployeeService : IEmployeeService
         {
             _logger.LogError(ex, "Erreur lors de l'appel à GetEmployeeByIdAsync pour {EmployeeId}", employeeId);
             return null;
+        }
+    }
+    
+    public async Task<bool> InsertEmployeeAsync(Employee employee)
+    {
+        if (employee == null)
+            throw new ArgumentNullException(nameof(employee));
+
+        try
+        {
+            // Construire le corps JSON à envoyer (seuls les champs pertinents sont inclus)
+            var employeeData = new
+            {
+                first_name = employee.FirstName,
+                last_name = employee.Name,
+                designation = employee.Position,
+                department = employee.Department,
+                date_of_birth = employee.DateOfBirth?.ToString("yyyy-MM-dd"),
+                date_of_joining = employee.HiringDate?.ToString("yyyy-MM-dd"),
+                status = employee.Status,
+                gender = employee.Gender,
+                company_email = employee.Email,
+                company = employee.Company,
+                image = employee.PhotoUrl
+            };
+
+            string jsonContent = JsonConvert.SerializeObject(employeeData);
+            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+            // Appel POST vers l'API
+            var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Post, "/api/resource/Employee", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Échec de la création de l'employé : {Error}", error);
+                return false;
+            }
+
+            _logger.LogInformation("Employé créé avec succès : {Id}", employee.Id);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur lors de la création de l'employé");
+            return false;
+        }
+    }
+    
+    public async Task<bool> DeleteEmployeeAsync(string employee)
+    {
+        if (employee == null)
+            throw new ArgumentNullException(nameof(employee));
+
+        try
+        {
+            var endpoint = $"/api/resource/Employee/{employee}";
+            // Appel Delete vers l'API
+            var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Delete, endpoint, null);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Échec de la suppression de l'employé : {Error}", error);
+                return false;
+            }
+
+            _logger.LogInformation("Employé supprimé avec succès : {Id}", employee);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur lors de la suppression de l'employé");
+            return false;
+        }
+    }
+    
+    public async Task<bool> UpdateEmployeeAsync(Employee employee)
+    {
+        if (employee == null)
+            throw new ArgumentNullException(nameof(employee));
+
+        try
+        {
+            var employeeData = new
+            {
+                first_name = employee.FirstName,
+                last_name = employee.Name,
+                designation = employee.Position,
+                department = employee.Department,
+                date_of_birth = employee.DateOfBirth?.ToString("yyyy-MM-dd"),
+                date_of_joining = employee.HiringDate?.ToString("yyyy-MM-dd"),
+                status = employee.Status,
+                gender = employee.Gender,
+                company_email = employee.Email,
+                company = employee.Company,
+                image = employee.PhotoUrl
+            };
+
+            string jsonContent = JsonConvert.SerializeObject(employeeData);
+            var content = new StringContent(jsonContent, System.Text.Encoding.UTF8, "application/json");
+
+            var endpoint = $"/api/resource/Employee/{employee.Id}";
+
+            var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Put, endpoint, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Échec de la modification de l'employé : {Error}", error);
+                return false;
+            }
+
+            _logger.LogInformation("Employé modifié avec succès : {Id}", employee.Id);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erreur lors de la modification de l'employé");
+            return false;
         }
     }
 

@@ -1,0 +1,216 @@
+@model ERPNextNewApp.Models.Salary.SalaryStructure
+
+@using System.Text.Json
+@{
+var companies = ViewBag.Companies as List<Company>;
+var allEarnings = ViewBag.Earnings as List<ERPNextNewApp.Models.Salary.SalaryComponent>;
+var allDeductions = ViewBag.Deductions as List<ERPNextNewApp.Models.Salary.SalaryComponent>;
+
+var jsonOptions = new JsonSerializerOptions
+{
+PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+WriteIndented = true
+};
+}
+
+<div class="container-fluid mt-4">
+    <h2>Insertion Salary Structure</h2>
+
+    <form asp-action="Insert" method="post">
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" name="name" class="form-control" required />
+        </div>
+
+        <div class="form-group">
+            <label>Company</label>
+            <select name="company.Name" class="form-control" required 
+                    onchange="updateCurrency(this)">
+                <option value="">-- Select Company --</option>
+                @foreach (var company in companies)
+                {
+                    <option value="@company.Name" data-currency="@company.Currency">
+                        @company.Name (@company.Currency)
+                    </option>
+                }
+            </select>
+            <input type="hidden" name="company.Currency" id="companyCurrency" 
+                   asp-for="Company.Currency" required />
+        </div>
+
+        <!-- Earnings Table -->
+        <h4 class="mt-4">Earnings</h4>
+        <table class="table table-bordered" id="earnings-table">
+            <thead class="thead-light">
+            <tr>
+                <th>Component</th>
+                <th>Abbreviation</th>
+                <th>Formula</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Rows will be added dynamically -->
+            </tbody>
+        </table>
+        <button type="button" class="btn btn-primary" onclick="addEarningRow()">Add Earning</button>
+
+        <!-- Deductions Table -->
+        <h4 class="mt-4">Deductions</h4>
+        <table class="table table-bordered" id="deductions-table">
+            <thead class="thead-light">
+            <tr>
+                <th>Component</th>
+                <th>Abbreviation</th>
+                <th>Formula</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            <!-- Rows will be added dynamically -->
+            </tbody>
+        </table>
+        <button type="button" class="btn btn-primary" onclick="addDeductionRow()">Add Deduction</button>
+
+        <div class="form-group mt-4">
+            <button type="submit" class="btn btn-success">Save</button>
+            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    // Convertir les données pour les rendre compatibles avec le modèle C#
+    function convertToModelFormat(data) {
+        return data.map(item => ({
+            SalaryComponentName: item.salary_component,
+            Abbr: item.salary_component_abbr,
+            Type: item.type,
+            Amount: item.amount,
+            Formula: item.formula
+        }));
+    }
+
+    function updateCurrency(select) {
+        const selectedOption = select.options[select.selectedIndex];
+        const currency = selectedOption.dataset.currency || '';
+        document.getElementById('companyCurrency').value = currency;
+    }
+
+    const earningsData = convertToModelFormat(@Html.Raw(JsonSerializer.Serialize(allEarnings, jsonOptions)));
+    const deductionsData = convertToModelFormat(@Html.Raw(JsonSerializer.Serialize(allDeductions, jsonOptions)));
+
+    console.log("Earnings Data (converted):", earningsData);
+    console.log("Deductions Data (converted):", deductionsData);
+
+    function addEarningRow() {
+        addRow('Earnings', earningsData, 'earnings-table');
+    }
+
+    function addDeductionRow() {
+        addRow('Deductions', deductionsData, 'deductions-table');
+    }
+
+    function addRow(collectionName, components, tableId) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        const index = tbody.querySelectorAll('tr').length;
+
+        const row = document.createElement('tr');
+
+        // Component Select
+        const componentCell = document.createElement('td');
+        const componentSelect = document.createElement('select');
+        componentSelect.name = `${collectionName}[${index}].SalaryComponentName`;
+        componentSelect.className = 'form-control component-select';
+        componentSelect.required = true;
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = '-- Select Component --';
+        componentSelect.appendChild(defaultOption);
+
+        components.forEach(component => {
+            const option = document.createElement('option');
+            option.value = component.SalaryComponentName;
+            option.textContent = component.SalaryComponentName;
+            option.dataset.abbr = component.Abbr;
+            componentSelect.appendChild(option);
+        });
+
+        componentSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            row.querySelector('.abbr-input').value = selectedOption.dataset.abbr || '';
+        });
+
+        componentCell.appendChild(componentSelect);
+        row.appendChild(componentCell);
+
+        // Abbreviation
+        const abbrCell = document.createElement('td');
+        const abbrInput = document.createElement('input');
+        abbrInput.type = 'text';
+        abbrInput.name = `${collectionName}[${index}].Abbr`;
+        abbrInput.className = 'form-control abbr-input';
+        abbrInput.readOnly = true;
+        abbrCell.appendChild(abbrInput);
+        row.appendChild(abbrCell);
+
+        // Formula
+        const formulaCell = document.createElement('td');
+        const formulaInput = document.createElement('input');
+        formulaInput.type = 'text';
+        formulaInput.name = `${collectionName}[${index}].Formula`;
+        formulaInput.className = 'form-control formula-input';
+        formulaCell.appendChild(formulaInput);
+        row.appendChild(formulaCell);
+
+        // Hidden Type
+        const typeInput = document.createElement('input');
+        typeInput.type = 'hidden';
+        typeInput.name = `${collectionName}[${index}].Type`;
+        typeInput.value = collectionName === 'Earnings' ? 'Earning' : 'Deduction';
+        row.appendChild(typeInput);
+
+        // Action
+        const actionCell = document.createElement('td');
+        const deleteButton = document.createElement('button');
+        deleteButton.type = 'button';
+        deleteButton.className = 'btn btn-danger';
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', function() {
+            row.remove();
+            reindexRows(tableId, collectionName);
+        });
+        actionCell.appendChild(deleteButton);
+        row.appendChild(actionCell);
+
+        tbody.appendChild(row);
+    }
+
+    function reindexRows(tableId, collectionName) {
+        const tbody = document.querySelector(`#${tableId} tbody`);
+        const rows = tbody.querySelectorAll('tr');
+
+        rows.forEach((row, index) => {
+            // Update all input names with new index
+            const inputs = row.querySelectorAll('input, select');
+
+            inputs.forEach(input => {
+                const name = input.name;
+                if (name) {
+                    const newName = name.replace(/\[\d+\]/, `[${index}]`);
+                    input.name = newName;
+                }
+            });
+        });
+    }
+
+    // Add initial rows if needed
+    document.addEventListener('DOMContentLoaded', function() {
+        // You can add initial rows here if needed
+        // addEarningRow();
+        // addDeductionRow();
+    });
+</script>
+}

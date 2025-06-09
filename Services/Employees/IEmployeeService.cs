@@ -17,4 +17,10 @@ public interface IEmployeeService
     Task<List<Employee>> GetEmployeesAllAsync();
     Task<Employee?> GetEmployeeByIdAsync(string employeeId);
     Task<bool> DeleteEmployeesAsync(List<string> employeeNames);
+
+    Task<bool> InsertEmployeeAsync(Employee employee);
+
+    Task<bool> UpdateEmployeeAsync(Employee employee);
+
+    Task<bool> DeleteEmployeeAsync(string employee);
 }
