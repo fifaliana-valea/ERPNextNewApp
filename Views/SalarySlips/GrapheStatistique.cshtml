@@ -91,15 +91,15 @@ stackedDeductionsData[key] = Model.Salaries.Select(s => s.TotalMonthDeductions.C
             let y = top + 20;
 
             ctx.fillStyle = 'rgba(40, 167, 69, 1)';
-            ctx.fillText('Total Brut : ' + totalBrut.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar', x, y);
+            ctx.fillText('Total Brut : ' + totalBrut.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' USD', x, y);
             y += lineHeight;
 
             ctx.fillStyle = 'rgba(220, 53, 69, 1)';
-            ctx.fillText('Total Déductions : ' + totalDeduction.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar', x, y);
+            ctx.fillText('Total Déductions : ' + totalDeduction.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' USD', x, y);
             y += lineHeight;
 
             ctx.fillStyle = 'rgba(0, 123, 255, 1)';
-            ctx.fillText('Total Net : ' + totalNet.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar', x, y);
+            ctx.fillText('Total Net : ' + totalNet.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' USD', x, y);
             ctx.restore();
         }
     });
@@ -153,7 +153,7 @@ stackedDeductionsData[key] = Model.Salaries.Select(s => s.TotalMonthDeductions.C
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        callback: (value) => value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " Ar"
+                        callback: (value) => value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + " USD"
                     }
                 }
             }
@@ -204,7 +204,7 @@ stackedDeductionsData[key] = Model.Salaries.Select(s => s.TotalMonthDeductions.C
                     stacked: true,
                     beginAtZero: true,
                     ticks: {
-                        callback: (value) => value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' Ar'
+                        callback: (value) => value.toLocaleString('fr-FR', { minimumFractionDigits: 2 }) + ' USD'
                     }
                 }
             }
