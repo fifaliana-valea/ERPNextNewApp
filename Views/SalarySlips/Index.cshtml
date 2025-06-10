@@ -112,7 +112,7 @@
                     <table class="table table-striped table-hover">
                         <thead class="thead-dark">
                         <tr>
-                            <th>Nom</th>
+                            @* <th>Nom</th> *@
                             <th>Période</th>
                             <th>Employé</th>
                             <th>Date de publication</th>
@@ -127,7 +127,7 @@
                         @foreach (var slip in Model.SalarySlips)
                         {
                             <tr>
-                                <td>@slip.Name</td>
+                                @* <td>@slip.Name</td> *@
                                 <td>@slip.StartDate au @slip.EndDate</td>
                                 <td>@slip.EmployeeName</td>
                                 <td>@slip.PostingDate</td>
