@@ -14,7 +14,7 @@ public class CompanyService: ICompanyService
         _logger = logger;
     }
         
-    public async Task<List<Models.Company>> GetAllSalaryComponentsAsync()
+    public async Task<List<Models.Company>> GetAllCompanysAsync()
     {
         const string endpoint = "/api/resource/Company?fields=[\"name\",\"default_currency\"]&limit=0";
 
@@ -29,7 +29,7 @@ public class CompanyService: ICompanyService
             using var doc = JsonDocument.Parse(json);
             var salaryComponentsJson = doc.RootElement.GetProperty("data");
 
-            var salaryComponents = JsonSerializer.Deserialize<List<Models.Company>>(
+            var companies = JsonSerializer.Deserialize<List<Models.Company>>(
                 salaryComponentsJson.GetRawText(),
                 new JsonSerializerOptions
                 {
@@ -37,12 +37,44 @@ public class CompanyService: ICompanyService
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
 
-            return salaryComponents ?? new List<Models.Company>();
+            return companies ?? new List<Models.Company>();
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException)
         {
             _logger.LogError(ex, "Erreur lors de la récupération des composants de salaire");
             return new List<Models.Company>();
+        }
+    }
+    
+    public async Task<Models.Company> GetByIdCompanieAsync(string companyId)
+    {
+        string endpoint = $"/api/resource/Company/{companyId}?fields=[\"name\",\"default_currency\"]";
+
+        try
+        {
+            using var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
+            response.EnsureSuccessStatusCode();
+
+            var json = await response.Content.ReadAsStringAsync();
+            _logger.LogDebug("Réponse JSON reçue (Salary Components): {json}", json);
+
+            using var doc = JsonDocument.Parse(json);
+            var salaryComponentsJson = doc.RootElement.GetProperty("data");
+
+            var companies = JsonSerializer.Deserialize<Models.Company>(
+                salaryComponentsJson.GetRawText(),
+                new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
+
+            return companies ?? new Models.Company();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or JsonException)
+        {
+            _logger.LogError(ex, "Erreur lors de la récupération des composants de salaire");
+            return new Models.Company();
         }
     }
 }

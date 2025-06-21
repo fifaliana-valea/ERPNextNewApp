@@ -90,4 +90,45 @@ public class UtileService : IUtileService
         }
     }
 
+    public List<DateTime> GetListeDate(DateTime? dateDebut, DateTime? dateFin)
+    {
+        List<DateTime> liste = new List<DateTime>();
+
+        if (dateDebut == null || dateFin == null)
+            return liste;
+
+        DateTime debut = dateDebut.Value;
+        DateTime fin = dateFin.Value;
+
+        DateTime current = debut;
+
+        while (true)
+        {
+            if (current.AddMonths(1) > fin)
+            {
+                liste.Add(fin);
+                break;
+            }
+
+            liste.Add(current);
+            current = current.AddMonths(1);
+        }
+
+        return liste;
+    }
+    
+    public List<DateTime> GetDate(DateTime date)
+    {
+        List<DateTime> liste = new List<DateTime>();
+
+        DateTime premierJour = new DateTime(date.Year, date.Month, 1);
+        liste.Add(premierJour);
+
+        DateTime dernierJour = premierJour.AddMonths(1).AddDays(-1);
+        liste.Add(dernierJour);
+
+        return liste;
+    }
+
+
 }

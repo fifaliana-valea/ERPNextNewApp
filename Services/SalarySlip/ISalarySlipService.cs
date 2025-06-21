@@ -19,4 +19,14 @@ public interface ISalarySlipService
     Task<List<Models.Salary.SalarySlip>> GetSalarySlipsStatistiqueAsync(int annee = 0);
 
     Task<StatistiqueTotal> GetSalaryStatistiqueAsync(int annee = 0);
+
+    Task<bool> DeleteSalarySlipsAsync(string slpis);
+
+    Task<bool> ModificationSlipsAsync(Models.Salary.SalarySlip slips);
+
+    Task<bool> InsertSalarySlipsAsync(Models.Salary.SalarySlip salarySlip);
+
+    Task<List<Models.Salary.SalarySlip>> GetSalarySlipsWithConditionAsync(decimal salary, int condition,
+        string componentName);
+
 }

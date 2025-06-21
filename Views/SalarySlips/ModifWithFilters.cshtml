@@ -1,0 +1,112 @@
+@using ERPNextNewApp.Models.Salary
+@model ERPNextNewApp.ViewModels.SalarySlips.ModifViews
+
+<div class="container-fluid mt-4">
+    <h2>Modification Salaire</h2>
+
+    @if (ViewBag.Success != null)
+    {
+        <div class="alert alert-success">@ViewBag.Success</div>
+    }
+
+    @if (ViewBag.Error != null)
+    {
+        <div class="alert alert-danger">@ViewBag.Error</div>
+    }
+
+    <form asp-action="ModifWithFilters" method="post">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Component" class="form-label">Composant</label>
+                <select asp-for="Component" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach (var component in Model.SalaireSalaire ?? new List<SalaryComponent>())
+                    {
+                        <option value="@component.SalaryComponentName" 
+                                selected="@(Model.Component == component.SalaryComponentName)">
+                            @component.SalaryComponentName
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Salary" class="form-label">Salaire</label>
+                <input asp-for="Salary" class="form-control" type="number" min="0" step="0.01" />
+                <span asp-validation-for="Salary" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="Condition" class="form-label">Condition</label>
+                <select asp-for="Condition" class="form-select">
+                    <option value="0">=</option>
+                    <option value="1">>=</option>
+                    <option value="2"><=</option>
+                    <option value="3">></option>
+                    <option value="4"><</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Action" class="form-label">Action</label>
+                <select asp-for="Action" class="form-select">
+                    <option value="0">-</option>
+                    <option value="1">+</option>
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="Pourcentage" class="form-label">Pourcentage</label>
+                <input asp-for="Pourcentage" class="form-control" type="number" step="0.01" />
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Modifier</button>
+        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+    </form>
+
+    @if (Model.SalarySlips != null && Model.SalarySlips.Any())
+    {
+        <h4 class="mt-5">Les employés concernés par les modifications</h4>
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>Employé</th>
+                    <th>Salaire Brut</th>
+                    <th>Salaire Net</th>
+                    <th>Composant</th>
+                    <th>Du</th>
+                    <th>Au</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var slip in Model.SalarySlips)
+                {
+                    <tr>
+                        <td>@slip.EmployeeName</td>
+                        <td>@slip.GrossPay</td>
+                        <td>@slip.NetPay</td>
+                        <td>
+                            @{
+                                var comp = slip.Earnings.Concat(slip.Deductions)
+                                    .FirstOrDefault(c => c.SalaryComponentName == Model.Component);
+                                if (comp != null)
+                                {
+                                    @($"{comp.SalaryComponentName} : {comp.Amount}")
+                                }
+                                else
+                                {
+                                    @("-")
+                                }
+                            }
+                        </td>
+                        <td>@slip.StartDate.ToShortDateString()</td>
+                        <td>@slip.EndDate.ToShortDateString()</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>

@@ -3,8 +3,11 @@ using ERPNextNewApp.Services.SalarySlip;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
 using ERPNextNewApp.Services.Employees;
+using ERPNextNewApp.Services.SalaryComponent;
+using ERPNextNewApp.Services.SalaryStructureAssignment;
 using ERPNextNewApp.Services.Utile;
 using ERPNextNewApp.ViewModels.SalarySlips;
+using ERPNextNewApp.ViewModels.SalaryStructureAssignment;
 using Microsoft.AspNetCore.Authorization;
 
 namespace ERPNextNewApp.Controllers
@@ -15,17 +18,23 @@ namespace ERPNextNewApp.Controllers
         private readonly ISalarySlipService _salarySlipService;
         private readonly IEmployeeService _employeeService;
         private readonly IUtileService _utileService;
+        private readonly ISalaryComponentService _salaryComponentService;
+        private readonly ISalaryStructureAssignmentService  _salaryStructureAssignmentService;
         private readonly ILogger<SalarySlipsController> _logger;
 
         public SalarySlipsController(
             ISalarySlipService salarySlipService,
             IEmployeeService employeeService,
             IUtileService utileService,
+            ISalaryStructureAssignmentService salaryStructureAssignmentService,
+            ISalaryComponentService salaryComponentService,
             ILogger<SalarySlipsController> logger)
         {
             _salarySlipService = salarySlipService;
             _employeeService = employeeService;
             _utileService = utileService;
+            _salaryComponentService = salaryComponentService;
+            _salaryStructureAssignmentService = salaryStructureAssignmentService;
             _logger = logger;
         }
 
@@ -212,6 +221,60 @@ namespace ERPNextNewApp.Controllers
                 return StatusCode(500, "Erreur lors de la génération du PDF");
             }
         }
+
+        [HttpGet]
+        public async Task<IActionResult> ModifWithFilters()
+        {
+            try
+            {
+                var components = await _salaryComponentService.GetAllSalaryComponentsAsync();
+                var model = new ModifViews
+                {
+                    SalaireSalaire = components
+                };
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la récupération des salary components");
+                return StatusCode(500, "Erreur serveur.");
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ModifWithFilters(ModifViews model)
+        {
+            try
+            {
+                model.SalaireSalaire = await _salaryComponentService.GetAllSalaryComponentsAsync();
+
+                var salarySlips = await _salarySlipService.GetSalarySlipsWithConditionAsync(
+                    model.Salary, model.Condition, model.Component);
+
+                model.SalarySlips = salarySlips;
+
+                var resultat = await _salaryStructureAssignmentService.ModificationWithCondition(
+                    model.Salary, model.Condition, model.Component, model.Pourcentage, model.Action);
+
+                if (resultat.resultat)
+                {
+                    ViewBag.Success = resultat.message;  
+                }
+                else
+                {
+                    ViewBag.Error = resultat.message;
+                }
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Erreur lors de la modification des salary slips");
+                ViewBag.Error = "Erreur inattendue lors du traitement.";
+                return View(model);
+            }
+        }
+        
     }
     
 }

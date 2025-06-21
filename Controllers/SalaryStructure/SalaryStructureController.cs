@@ -26,7 +26,7 @@ public class SalaryStructureController : Controller
         try
         {
             var components = await _salaryComponentService.GetAllSalaryComponentsAsync();
-            var companies = await _companyService.GetAllSalaryComponentsAsync();
+            var companies = await _companyService.GetAllCompanysAsync();
 
             var earnings = components.Where(c => c.Type == "Earning").ToList();
             var deductions = components.Where(c => c.Type == "Deduction").ToList();

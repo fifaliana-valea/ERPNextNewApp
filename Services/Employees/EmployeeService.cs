@@ -96,8 +96,7 @@ public class EmployeeService : IEmployeeService
 
     public async Task<List<Employee>> GetEmployeesAllAsync()
     {
-        const string endpoint = "/api/resource/Employee?fields=[\"name\",\"employee_name\",\"designation\",\"department\",\"date_of_birth\",\"date_of_joining\",\"status\",\"gender\",\"company_email\",\"image\"]&limit=0";
-
+        const string endpoint = "/api/resource/Employee?fields=[\"name\", \"employee_name\", \"designation\", \"date_of_birth\", \"department\", \"date_of_joining\", \"status\", \"gender\", \"company_email\", \"image\", \"company\"]&limit=0";
         try
         {
             using var response = await _loginService.MakeAuthenticatedRequest(HttpMethod.Get, endpoint);
