@@ -246,19 +246,28 @@ namespace ERPNextNewApp.Controllers
         {
             try
             {
+                // Toujours charger les composants même en cas d'erreur
                 model.SalaireSalaire = await _salaryComponentService.GetAllSalaryComponentsAsync();
 
+                // Vérifie les règles de validation définies avec [Range], etc.
+                if (!ModelState.IsValid)
+                {
+                    ViewBag.Error = "Veuillez corriger les erreurs du formulaire.";
+                    return View(model);
+                }
+
+                // Récupère les salary slips correspondant à la condition
                 var salarySlips = await _salarySlipService.GetSalarySlipsWithConditionAsync(
                     model.Salary, model.Condition, model.Component);
-
                 model.SalarySlips = salarySlips;
 
+                // Applique la modification avec pourcentage et action
                 var resultat = await _salaryStructureAssignmentService.ModificationWithCondition(
                     model.Salary, model.Condition, model.Component, model.Pourcentage, model.Action);
 
                 if (resultat.resultat)
                 {
-                    ViewBag.Success = resultat.message;  
+                    ViewBag.Success = resultat.message;
                 }
                 else
                 {
@@ -274,7 +283,6 @@ namespace ERPNextNewApp.Controllers
                 return View(model);
             }
         }
-        
     }
     
 }

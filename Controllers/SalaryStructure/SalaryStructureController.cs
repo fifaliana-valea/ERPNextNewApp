@@ -74,9 +74,11 @@ public class SalaryStructureController : Controller
             if (!result)
             {
                 _logger.LogError("Failed to insert salary structure");
-                return StatusCode(500, "Failed to save data");
+                TempData["Error"] = "Erreur lors insertion salary structure";
+                return RedirectToAction("Index");
             }
 
+            TempData["Success"] = "Insertion avec sucess";
             return RedirectToAction("Index");
         }
         catch (Exception ex)

@@ -122,12 +122,23 @@ public class SalaryStructureAssignmentService : ISalaryStructureAssignmentServic
 
         try
         {
-            var json = JsonSerializer.Serialize(salaryStructureAssignment, new JsonSerializerOptions
+            // On ignore le champ Name pour éviter les doublons (clé primaire)
+            var payload = new
+            {
+                employee = salaryStructureAssignment.Employee,
+                salary_structure = salaryStructureAssignment.SalaryStructure,
+                from_date = salaryStructureAssignment.FromDate.ToString("yyyy-MM-dd"),
+                @base = salaryStructureAssignment.BaseSalary,
+                company = salaryStructureAssignment.Company,
+                docstatus = salaryStructureAssignment.Docstatus
+            };
+
+            var json = JsonSerializer.Serialize(payload, new JsonSerializerOptions
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
             });
+
             _logger.LogInformation("Payload JSON généré : {Json}", json);
 
             using var content = new StringContent(json, Encoding.UTF8, "application/json");
@@ -140,58 +151,21 @@ public class SalaryStructureAssignmentService : ISalaryStructureAssignmentServic
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Échec de la création du salary structure assigment : {Error}", error);
+                _logger.LogError("Échec de la création du Salary Structure Assignment : {Error}", error);
                 return false;
             }
 
-            _logger.LogInformation("Salary structure assigment créé avec succès : {Name}", salaryStructureAssignment.Name);
+            _logger.LogInformation("Salary Structure Assignment inséré avec succès.");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Erreur lors de la création du salary structure assigment");
+            _logger.LogError(ex, "Erreur lors de l'insertion du Salary Structure Assignment");
             return false;
         }
     }
 
-    public async Task<bool> UpdateSalaryStructureAssigmentAsync(Models.Salary.SalaryStructureAssignment salaryStructureAssignment)
-    {
-        if (salaryStructureAssignment == null)
-            throw new ArgumentNullException(nameof(salaryStructureAssignment));
-
-        try
-        {
-            var json = JsonSerializer.Serialize(salaryStructureAssignment, new JsonSerializerOptions
-            {
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                WriteIndented = false,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
-            });
-            _logger.LogInformation("Payload JSON généré : {Json}", json);
-
-            using var content = new StringContent(json, Encoding.UTF8, "application/json");
-            var response = await _loginService.MakeAuthenticatedRequest(
-                HttpMethod.Put,
-                $"/api/resource/Salary Structure Assignment/{salaryStructureAssignment.Name}",
-                content
-            );
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Échec de la modification du salary structure assigment : {Error}", error);
-                return false;
-            }
-
-            _logger.LogInformation("Salary structure assigment modifie avec succès : {Name}", salaryStructureAssignment.Name);
-            return true;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erreur lors de la modification du salary structure assigment");
-            return false;
-        }
-    }
+    
     public async Task<(bool resultat,string message)> InsertWithConditionAsync(List<DateTime> dateTimes, string employee, decimal salary)
     {
         string message;
@@ -240,6 +214,7 @@ public class SalaryStructureAssignmentService : ISalaryStructureAssignmentServic
         foreach (var date in dateTimes)
         {
             var verifDates = _utileService.GetDate(date);
+            _logger.LogWarning("Les deux date :  {Date1} à la date {Date1}", verifDates[0], verifDates[1]);
             var verifAssigment = await GetSalaryAssigmentAsync(employee, verifDates[0], verifDates[1]);
             if (verifAssigment == null || verifAssigment.Count == 0)
             {
@@ -267,7 +242,7 @@ public class SalaryStructureAssignmentService : ISalaryStructureAssignmentServic
                 if (!successAssigment)
                 {
                     _logger.LogError("Échec d'insertion du salary strutcure assigment pour {Emp}", emp.Id);
-                    message = $"<UNK>chec d'insertion du salary strutcure assigment pour {emp.Id}";
+                    message = $"Échec d'insertion du salary strutcure assigment pour {emp.Id}";
                     return (false,message);
                 }
 
@@ -275,7 +250,7 @@ public class SalaryStructureAssignmentService : ISalaryStructureAssignmentServic
                 if (!successSlips)
                 {
                     _logger.LogError("Échec d'insertion du salary slips pour {Emp}", emp.Id);
-                    message = $"<UNK>chec d'insertion salary slips pour {emp.Id}";
+                    message = $"Échec d'insertion salary slips pour {emp.Id}";
                     return (false,message);
                 }
             }

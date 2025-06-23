@@ -57,9 +57,10 @@
                 </select>
             </div>
 
-            <div class="col-md-6">
-                <label asp-for="Pourcentage" class="form-label">Pourcentage</label>
-                <input asp-for="Pourcentage" class="form-control" type="number" step="0.01" />
+            <div class="form-group">
+                <label asp-for="Pourcentage"></label>
+                <input asp-for="Pourcentage" class="form-control" />
+                <span asp-validation-for="Pourcentage" class="text-danger"></span>
             </div>
         </div>
 

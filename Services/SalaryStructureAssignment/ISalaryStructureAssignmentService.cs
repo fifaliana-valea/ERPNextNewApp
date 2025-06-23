@@ -6,9 +6,7 @@ public interface ISalaryStructureAssignmentService
 
     Task<Models.Salary.SalaryStructureAssignment?> GetSalaryAssigmentByIdAsync(string salaryAssigmentId);
     Task<bool> InsertSalaryStructureAssigmentAsync(Models.Salary.SalaryStructureAssignment salaryStructureAssignment);
-
-    Task<bool> UpdateSalaryStructureAssigmentAsync(Models.Salary.SalaryStructureAssignment salaryStructureAssignment);
-
+    
     Task<bool> DeleteAssigmentsAsync(string assigment);
 
     Task<bool> ModificationAssigmentsAsync(Models.Salary.SalaryStructureAssignment assignment);

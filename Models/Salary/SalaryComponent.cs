@@ -16,5 +16,6 @@ public class SalaryComponent
     [JsonPropertyName("amount")]
     public decimal Amount { get; set; }               // Montant
 
+    [JsonPropertyName("formula")]
     public string? Formula { get; set; }               // Optionnel
 }

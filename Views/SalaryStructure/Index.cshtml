@@ -16,6 +16,15 @@ WriteIndented = true
 <div class="container-fluid mt-4">
     <h2>Insertion Salary Structure</h2>
 
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
     <form asp-action="Insert" method="post">
         <div class="form-group">
             <label>Name</label>
