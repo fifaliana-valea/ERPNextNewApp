@@ -1,0 +1,51 @@
+@model ERPNextNewApp.ViewModels.SalaryStructureAssignment.InsertSalaryStructureAssignment;
+
+<div class="container-fluid mt-4">
+    <h2>Insertion Salaire</h2>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger">@TempData["Error"]</div>
+    }
+
+    <form asp-controller="SalaryStructureAssignment" asp-action="Index" method="post">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="DateDebut" class="form-label">Date debut</label>
+                <input asp-for="DateDebut" class="form-control" type="date" />
+            </div>
+
+            <div class="col-md-6">
+                <label asp-for="DateFin" class="form-label">Date Fin</label>
+                <input asp-for="DateFin" class="form-control" type="date" />
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label asp-for="EmployeeId" class="form-label">Employee</label>
+                <select asp-for="EmployeeId" class="form-select">
+                    <option value="">-- Sélectionnez --</option>
+                    @foreach (var employee in Model.Employees ?? new List<Employee>())
+                    {
+                        <option value="@employee.Id" selected="@(Model.EmployeeId == employee.Id)">
+                            @employee.FullName
+                        </option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label asp-for="Salary" class="form-label">Salaire de base</label>
+                <input asp-for="Salary" class="form-control" type="number" min="0" step="0.01" />
+                <span asp-validation-for="Salary" class="text-danger"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a asp-action="Index" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>

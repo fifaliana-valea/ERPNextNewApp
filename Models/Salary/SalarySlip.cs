@@ -20,13 +20,13 @@ public class SalarySlip
     public string Company { get; set; }
 
     [JsonPropertyName("posting_date")]
-    public string PostingDate { get; set; }
+    public DateTime PostingDate { get; set; }
 
     [JsonPropertyName("start_date")]
-    public string StartDate { get; set; }
+    public DateTime StartDate { get; set; }
 
     [JsonPropertyName("end_date")]
-    public string EndDate { get; set; }
+    public DateTime EndDate { get; set; }
 
     [JsonPropertyName("net_pay")]
     public decimal NetPay { get; set; }
@@ -42,4 +42,6 @@ public class SalarySlip
     
     public List<SalaryComponent> Earnings { get; set; }
     public List<SalaryComponent> Deductions { get; set; }
+    
+
 }

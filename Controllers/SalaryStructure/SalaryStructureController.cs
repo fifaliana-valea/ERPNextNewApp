@@ -26,7 +26,7 @@ public class SalaryStructureController : Controller
         try
         {
             var components = await _salaryComponentService.GetAllSalaryComponentsAsync();
-            var companies = await _companyService.GetAllSalaryComponentsAsync();
+            var companies = await _companyService.GetAllCompanysAsync();
 
             var earnings = components.Where(c => c.Type == "Earning").ToList();
             var deductions = components.Where(c => c.Type == "Deduction").ToList();
@@ -74,9 +74,11 @@ public class SalaryStructureController : Controller
             if (!result)
             {
                 _logger.LogError("Failed to insert salary structure");
-                return StatusCode(500, "Failed to save data");
+                TempData["Error"] = "Erreur lors insertion salary structure";
+                return RedirectToAction("Index");
             }
 
+            TempData["Success"] = "Insertion avec sucess";
             return RedirectToAction("Index");
         }
         catch (Exception ex)

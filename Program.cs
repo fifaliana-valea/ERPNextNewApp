@@ -7,6 +7,7 @@ using ERPNextNewApp.Services.Login;
 using ERPNextNewApp.Services.SalaryComponent;
 using ERPNextNewApp.Services.SalarySlip;
 using ERPNextNewApp.Services.SalaryStructure;
+using ERPNextNewApp.Services.SalaryStructureAssignment;
 using ERPNextNewApp.Services.Utile;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -34,6 +35,7 @@ builder.Services.AddScoped<IUtileService, UtileService>();
 builder.Services.AddScoped<ISalaryComponentService, SalaryComponentService>();
 builder.Services.AddScoped<ISalaryStructureService, SalaryStructureService>();
 builder.Services.AddScoped<ICompanyService, CompanyService>();
+builder.Services.AddScoped<ISalaryStructureAssignmentService, SalaryStructureAssignmentService>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

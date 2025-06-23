@@ -203,7 +203,7 @@ public class ImportService : IImportService
             {
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 WriteIndented = false,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping // Désactive l'échappement des caractères
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping 
             });
             _logger.LogInformation("Payload JSON généré : {Json}", json);
 
